@@ -32,7 +32,7 @@ const StaffDashboard = () => {
       const email = localStorage.getItem('userEmail');
       
       if (!email) {
-        router.push('/');
+        router.push('/login');
       }
     };
 

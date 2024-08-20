@@ -35,7 +35,7 @@ const ManagerDashboard = () => {
       const email = localStorage.getItem('userEmail');
       
       if (!email) {
-        router.push('/');
+        router.push('/login');
       }
     };
 
@@ -99,7 +99,7 @@ const ManagerDashboard = () => {
 
   const handleLogout = async () => {
     localStorage.removeItem('userEmail');
-    router.push('/');
+    router.push('/login');
   };
 
   useEffect(() => {

@@ -19,6 +19,7 @@ const EditTask = () => {
   const [priority, setPriority] = useState<{ label: string; value: string | null }>({ label: 'Select Priority', value: null });
   const [staffOptions, setStaffOptions] = useState<{ label: string; value: string }[]>([]);
   const [staff, setStaff] = useState<{ label: string; value: string | null }>({ label: 'Select Staff', value: null });
+  const [note, setNote] = useState('');
   const [position, setPosition] = useState('');
   const [createdAt, setCreatedAt] = useState(new Date());
 
@@ -94,6 +95,7 @@ const EditTask = () => {
         setPriority({ label: task.priorityLevel, value: task.priorityLevel });
         setStaff({ label: task.staff, value: task.staff });
         setCreatedAt(new Date(task.createdAt));
+        setNote(task.note || '');
       } catch (error) {
         console.error('Error fetching task:', error);
       }
@@ -121,6 +123,7 @@ const EditTask = () => {
       priorityLevel: priority.value,
       staff: staff.value,
       createdAt: createdAt.toISOString(),
+      note,
     };
 
     try {
@@ -220,6 +223,16 @@ const EditTask = () => {
                 { label: 'Select Staff', value: null },
                 ...staffOptions
               ]}
+            />
+          </div>
+          <div>
+          <label htmlFor="note" className="block text-sm font-medium text-gray-700">Note</label>
+            <textarea
+              id="note"
+              name="note"
+              className="w-full p-2 mt-1 border border-gray-300 rounded"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
             />
           </div>
           <div className="flex items-center justify-between">

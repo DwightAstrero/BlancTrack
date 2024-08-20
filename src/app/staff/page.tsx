@@ -83,7 +83,7 @@ const StaffDashboard = () => {
 
   const handleLogout = async () => {
     localStorage.removeItem('userEmail');
-    router.push('/');
+    router.push('/login');
   };
 
   const toggleSidebar = () => {

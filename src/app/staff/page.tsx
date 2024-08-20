@@ -15,6 +15,7 @@ interface Task {
   staff: string;
   manager: string;
   createdAt: string;
+  note: string | null;
 }
 
 const StaffDashboard = () => {
@@ -71,7 +72,13 @@ const StaffDashboard = () => {
         if (error) {
           throw error;
         }
-        setTasks(tasks || []);
+
+        const updatedTasks = tasks.map(task =>({
+          ...task,
+          note: task.note ||'N/A',
+        }));
+
+        setTasks(updatedTasks);
       } catch (error) {
         console.error('Error fetching tasks:', error);
       }
@@ -210,6 +217,7 @@ const StaffDashboard = () => {
                     <p className="text-sm text-gray-600 mt-2">Priority: {task.priorityLevel}</p>
                     <p className="text-sm text-gray-600 mt-5">Created by: {task.manager}</p>
                     <p className="text-sm text-gray-600 mt-3">Assigned to: {task.staff}</p>
+                    <p className="text-sm text-gray-600 mt-5">Note: {task.note}</p>
                 </div>
                 <div className="text-right mt-2">
                   <Link href={`/status/${task.id}`} passHref>

@@ -15,6 +15,7 @@ const UpdateStatus = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<{ label: string; value: string }>({ label: 'Select Status', value: '' });
+  const [note, setNote] = useState('');
   const [position, setPosition] = useState('');
 
   useEffect(() => {
@@ -65,6 +66,7 @@ const UpdateStatus = () => {
         setTitle(task.title);
         setDescription(task.description);
         setStatus({ label: task.status.replace('_', ' '), value: task.status });
+        setNote(task.note || '');
       } catch (error) {
         console.error('Error fetching task:', error);
       }
@@ -83,12 +85,13 @@ const UpdateStatus = () => {
       return;
     }
 
-    const updatedStatus = {
-      status: status.value
+    const updatedTask = {
+      status: status.value,
+      note: note
     };
 
     try {
-      const { error } = await supabase.from('task').update(updatedStatus).eq('id', taskId);
+      const { error } = await supabase.from('task').update(updatedTask).eq('id', taskId);
 
       if (error) {
         throw error;
@@ -132,6 +135,16 @@ const UpdateStatus = () => {
                 { label: 'Completed', value: 'Completed' },
               ]}
               required
+            />
+          </div>
+          <div>
+          <label htmlFor="note" className="block text-sm font-medium text-gray-700">Note</label>
+            <textarea
+              id="note"
+              name="note"
+              className="w-full p-2 mt-1 border border-gray-300 rounded"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
             />
           </div>
           <div className="space-y-4">

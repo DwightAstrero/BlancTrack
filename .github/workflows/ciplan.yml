@@ -47,7 +47,7 @@ jobs:
       run: |
         npm run build || { echo "Build failed"; exit 1; }
         mkdir -p build
-        cp -r dist/* build/
+        cp -r .next/* build/ || echo "No files found in .next directory to copy."
       
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
@@ -112,5 +112,5 @@ jobs:
       run: |
         if [[ $GITHUB_RUN_STATUS == "failure" ]]; then
           echo "Sending email notification to team..."
-          # You'd need to implement the actual notification step here
+          # notif step ; needed?
         fi

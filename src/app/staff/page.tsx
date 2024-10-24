@@ -26,6 +26,7 @@ const StaffDashboard = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [position, setPosition] = useState('');
   const router = useRouter();
+  const [isChatOpen, setIsChatOpen] = useState(false); // State for chatbox visibility
 
   useEffect(() => {
     const isValidRedirect = async () => {
@@ -60,7 +61,7 @@ const StaffDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (position && position != 'staff') {
+    if (position && position !== 'staff') {
       router.push(`/${position}`);
     }
   }, [position]);
@@ -134,11 +135,15 @@ const StaffDashboard = () => {
 
   const filteredTasks = tasks.filter(task => task.staff === staffName && (filterStatus ? task.status === filterStatus : true));
 
+  // Function to toggle chatbox
+  const toggleChatbox = () => {
+    setIsChatOpen(!isChatOpen);
+  };
+
   return (
     <div className="min-h-screen bg-brand-cream flex">
-
-        {/* Hamburger Icon */}
-        {!isSidebarOpen && (
+              {/* Hamburger Icon */}
+              {!isSidebarOpen && (
           <button className="absolute top-4 left-4 z-10 text-brown" onClick={toggleSidebar}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
@@ -227,6 +232,25 @@ const StaffDashboard = () => {
             </div>
             </div>
           </div>
+
+      {/* Chatbox */}
+      <div className={`fixed bottom-0 right-0 w-96 transition-transform duration-300 transform ${isChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+        <div className="bg-white border border-gray-300 rounded-t-lg shadow-lg overflow-hidden">
+          <div className="p-4 bg-gray-800 text-white cursor-pointer" onClick={toggleChatbox}>
+            Manager/Employee to chat here
+          </div>
+          <div className="p-4" style={{ height: '300px', overflowY: 'scroll' }}>
+            {/* Chat messages will be displayed here */}
+            <div className="message">Hello!</div>
+            <div className="message">How can I help you?</div>
+          </div>
+        </div>
+        <div className="bg-gray-800 h-4 shadow-inner"></div>
+      </div>
+
+      <button className="fixed bottom-4 right-4 p-3 bg-blue-500 text-white rounded-full" onClick={toggleChatbox}>
+        <span className="font-bold">Chat</span>
+      </button>
     </div>
   );
 };

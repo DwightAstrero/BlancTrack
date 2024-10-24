@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import supabase from '../../../lib/supabaseClient';
 import bcrypt from 'bcryptjs';
+import Chatbox from '../../component/chatbox'; // Import your Chatbox component
 
 const AccountDetails = () => {
   const [firstName, setFirstName] = useState('');
@@ -20,7 +21,6 @@ const AccountDetails = () => {
   useEffect(() => {
     const isValidRedirect = async () => {
       const email = localStorage.getItem('userEmail');
-      
       if (!email) {
         router.push('/');
       }
@@ -50,7 +50,6 @@ const AccountDetails = () => {
         setFirstName(user.firstname);
         setLastName(user.lastname);
         setEmail(user.email);
-
       } catch (error) {
         console.error('Error fetching account details:', error);
       }
@@ -81,7 +80,7 @@ const AccountDetails = () => {
       } else {
         setNewPassword('');
         setConfirmNewPassword('');
-        
+
         const { data } = await supabase
           .from('user')
           .select('position')
@@ -90,15 +89,14 @@ const AccountDetails = () => {
 
         const position = data.position;
 
-        if(position === 'admin') {
+        if (position === 'admin') {
           router.push('/admin');
-        } else if(position === 'manager') {
+        } else if (position === 'manager') {
           router.push('/manager');
         } else {
           router.push('/staff');
         }
       }
-      
     } catch (error) {
       console.error('Error updating account details:', error);
       alert('An error occurred while updating account details.');
@@ -119,7 +117,6 @@ const AccountDetails = () => {
         if (data) {
           setPosition(data.position);
         }
-
       } catch (error) {
         console.error('Error:', error);
       }
@@ -146,7 +143,6 @@ const AccountDetails = () => {
         localStorage.removeItem('userEmail');
         router.push('/');
       }
-
     } catch (error) {
       console.error('Error deleting account:', error);
     } finally {
@@ -242,12 +238,15 @@ const AccountDetails = () => {
             <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
             <p className="mb-4">Are you sure you want to delete your account?</p>
             <div className="flex justify-end space-x-4">
-              <button onClick={closeModal} className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Cancel</button>
-              <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete</button>
+              <button onClick={closeModal} className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</button>
+              <button onClick={handleDelete} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Delete</button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Chatbox component */}
+      <Chatbox /> {/* Chatbox is always displayed on the page */}
     </div>
   );
 };

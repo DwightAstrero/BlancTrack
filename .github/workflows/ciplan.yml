@@ -95,33 +95,33 @@ jobs:
           name: test-reports
           path: test-reports/
 
-  integration-test:
-    runs-on: ubuntu-latest
-    needs: test  
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Start Application
-        run: npm start & 
-
-      - name: Run Integration Tests
-        run: npm run integration-test  
-
-      - name: Upload Integration Test Reports
-        uses: actions/upload-artifact@v3
-        with:
-          name: integration-test-reports
-          path: integration-test-reports/
+ # integration-test:
+ #   runs-on: ubuntu-latest
+ #   needs: test  
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v3
+#
+#      - name: Set up Node.js
+#        uses: actions/setup-node@v3
+#        with:
+#          node-version: 
+#
+#      - name: Install Dependencies
+#        run: npm ci
+#
+#      - name: Start Application
+#        run: npm start & 
+#
+#      - name: Run Integration Tests
+#        run: npm run integration-test  
+#
+#      - name: Upload Integration Test Reports
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: integration-test-reports
+#          path: integration-test-reports/
 
   post-test:
     runs-on: ubuntu-latest

@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import supabase from '../../../lib/supabaseClient';
 import bcrypt from 'bcryptjs';
-import Chatbox from '../../component/chatbox'; // Import your Chatbox component
+import MessengerSidebar from '../../component/MessengerSidebar';
+import LeftSidebar from '../../component/leftSidebar';
 
 const AccountDetails = () => {
   const [firstName, setFirstName] = useState('');
@@ -245,8 +246,6 @@ const AccountDetails = () => {
         </div>
       )}
 
-      {/* Chatbox component */}
-      <Chatbox /> {/* Chatbox is always displayed on the page */}
     </div>
   );
 };

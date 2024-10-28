@@ -4,19 +4,19 @@ import Link from 'next/link';
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  toggleSidebar: () => void; // Added
-  handleLogout: () => Promise<void>; // Added
-  userId: string | null; // Added
-  position: string | null; // Added
+  toggleSidebar: () => void;
+  handleLogout: () => Promise<void>;
+  userId: string | null;
+  position: string | null;
 }
 
 const LeftSidebar: React.FC<SidebarProps> = ({ 
   isOpen, 
   onClose, 
-  toggleSidebar, // Added
-  handleLogout, // Added
-  userId, // Added
-  position // Added
+  toggleSidebar, 
+  handleLogout, 
+  userId, 
+  position 
 }) => {
   return (
     <div className="relative">
@@ -43,10 +43,11 @@ const LeftSidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar */}
       <div 
-        className={`fixed top-0 h-full bg-brand-lgreen text-white p-4 flex flex-col ${isOpen ? 'left-0 z-20' : '-left-full'} transition-all duration-300 ease-in-out`}
+        className={`fixed top-0 h-full w-64 bg-[#c6c3ad] text-white p-4 flex flex-col ${isOpen ? 'left-0 z-20' : '-left-full'} transition-all duration-300 ease-in-out`}
+        style={{ backgroundColor: '#181c24' }} 
       >
-        <div className="flex justify-between mb-4">
-          <h2 className="text-sm">BlancTrack</h2>
+        <div className="flex justify-between mb-4 border-b border-gray-700 pb-4">
+          <h2 className="text-lg font-bold text-white">BlancTrack</h2>
           <button className="text-white" onClick={toggleSidebar}>
             <svg 
               className="w-6 h-6" 
@@ -65,35 +66,36 @@ const LeftSidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
         <ul className="space-y-2">
-          <li>
+        <li>
             <Link href={`/account/${userId}`}>
-              <h2 className="block text-white hover:text-brand-dgreen">Account</h2>
+                <h2 className="cursor-pointer p-2 hover:bg-gray-700">Account</h2>
             </Link>
-          </li>
-          <li>
+            </li>
+            <li>
             {position === 'admin' && (
-              <Link href="/admin">
-                <h2 className="font-medium hover:text-brand-dgreen">Dashboard</h2>
-              </Link>
+                <Link href="/admin">
+                <h2 className="cursor-pointer p-2 hover:bg-gray-700">Dashboard</h2>
+                </Link>
             )}
             {position === 'manager' && (
-              <Link href="/manager">
-                <h2 className="font-medium hover:text-brand-dgreen">Dashboard</h2>
-              </Link>
+                <Link href="/manager">
+                <h2 className="cursor-pointer p-2 hover:bg-gray-700">Dashboard</h2>
+                </Link>
             )}
             {position === 'staff' && (
-              <Link href="/staff">
-                <h2 className="font-medium hover:text-brand-dgreen">Dashboard</h2>
-              </Link>
+                <Link href="/staff">
+                <h2 className="cursor-pointer p-2 hover:bg-gray-700">Dashboard</h2>
+                </Link>
             )}
-          </li>
-          <li>
+            </li>
+            <li>
             <Link href="/announcement">
-              <h2 className="block text-white hover:text-brand-dgreen">Announcements</h2>
+                <h2 className="cursor-pointer p-2 hover:bg-gray-700">Announcements</h2>
             </Link>
-          </li>
+            </li>
+
         </ul>
-        <div className="mt-36 flex items-center">
+        <div className="mt-auto flex items-center">
           <button 
             onClick={handleLogout} 
             className="px-4 py-2 bg-rose-500 text-white rounded hover:bg-red-400 flex items-center space-x-2"

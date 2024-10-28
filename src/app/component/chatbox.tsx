@@ -15,7 +15,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
   const handleSendMessage = () => {
     if (newMessage.trim() !== '') {
       // Send message logic (you might need to lift this state up to MessengerSidebar)
-      activeChat.messages.push({ sender: 'userFirstName userLastName', content: newMessage }); // Assume 'User' is the logged-in user's name
+      activeChat.messages.push({ sender: 'userFirstName userLastName', content: newMessage }); // TODO: replace with actual logged-in user name
       setNewMessage('');
     }
   };

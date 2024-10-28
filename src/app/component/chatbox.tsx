@@ -1,8 +1,10 @@
 // Chatbox.tsx
-import React, { useState } from 'react';
+'use client'
+import React, { useEffect, useState } from 'react';
+import supabase from '../../lib/supabaseClient';
 
 interface ChatboxProps {
-  activeChat: { name: string; messages: { sender: string; content: string }[] };
+  activeChat: { user1: string; user2: string; messages: { sender: string; content: string }[] };
   isChatOpen: boolean;
   closeChatbox: () => void;
   index: number;
@@ -11,10 +13,61 @@ interface ChatboxProps {
 
 const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox, index, totalChatCount }) => {
   const [newMessage, setNewMessage] = useState('');
+  const [username, setUsername] = useState('');
+  const [recipient, setRecipient] = useState('');
 
+  useEffect(() => {
+    const fetchAuthorName = async () => {
+      const email = localStorage.getItem('userEmail');
+
+      const { data, error } = await supabase
+        .from('user')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user data:', error);
+        return;
+      }
+
+      setUsername(data?.id);
+    }; 
+    fetchAuthorName();
+  }, []);
+
+  useEffect(() => {
+    const fetchRecipient = async () => {
+      var recipientId;
+      console.log(username);
+      if (username == activeChat.user1) 
+        recipientId = activeChat.user2;
+      else recipientId = activeChat.user1;
+
+      const { data, error } = await supabase
+        .from('user')
+        .select('firstname, lastname')
+        .eq('id', recipientId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user data:', error);
+        return;
+      }
+
+      const fName = data?.firstname;
+      const lName = data?.lastname;
+      const fullName = `${fName} ${lName}`;
+
+      setRecipient(fullName);
+    }; 
+    fetchRecipient();
+  }, [username]);
+
+  // TODO: set to update database
   const handleSendMessage = () => {
     if (newMessage.trim() !== '') {
-      activeChat.messages.push({ sender: 'User', content: newMessage }); // TODO: Replace with actual user details
+      activeChat.messages.push({ sender: username, content: newMessage });
       setNewMessage('');
     }
   };
@@ -28,24 +81,25 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
     >
       <div className="bg-white border border-gray-300 rounded-t-lg shadow-lg overflow-hidden">
         <div className="p-4 bg-gray-800 text-white cursor-pointer" onClick={closeChatbox}>
-          {activeChat.name}
+          {recipient} {/* /////activeChat.name//////////////////////////// */}
         </div>
         <div className="p-4" style={{ maxHeight: '300px', overflowY: 'scroll' }}>
           {/* Display messages */}
           {activeChat.messages.map((msg, idx) => (
             <div key={idx} className={`my-2 flex flex-col`}>
-              {msg.sender !== 'User' && (
-                <span className="text-gray-500 text-xs mb-1">{msg.sender}</span> // Display name for other users
+              {msg.sender !== username && (
+                // ///////////////////////msg.sender/////////////////////////////
+                <span className="text-gray-500 text-xs mb-1">{recipient}</span> // Display name for other users
               )}
               <div
                 className={`p-2 ${
-                  msg.sender === 'User'
+                  msg.sender === username
                     ? 'bg-blue-200 text-blue-800 ml-auto rounded-tl-lg rounded-tr-lg rounded-bl-lg' // User message (right-aligned, rounded top and left)
                     : 'bg-gray-200 text-gray-800 mr-auto rounded-tl-lg rounded-tr-lg rounded-br-lg' // Other user message (left-aligned, rounded top and right)
                 }`}
                 style={{ maxWidth: '75%', wordBreak: 'break-word' }} // Set maximum width for messages
               >
-                <strong>{msg.sender === 'User' ? '' : ''}</strong> {msg.content} {/* No strong tag for user */}
+                <strong>{msg.sender === username ? '' : ''}</strong> {msg.content} {/* No strong tag for user */}
               </div>
             </div>
           ))}

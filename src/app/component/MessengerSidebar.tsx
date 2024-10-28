@@ -1,32 +1,91 @@
 // MessengerSidebar.tsx
-import React, { useState } from 'react';
+'use client'
+
+import React, { useState, useEffect } from 'react';
 import Chatbox from '../component/chatbox'; // Import the Chatbox component
+import supabase from '../../lib/supabaseClient';
 
 const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: string) => void }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeChats, setActiveChats] = useState<{ name: string; messages: { sender: string; content: string }[] }[]>([]);
+  const [activeChats, setActiveChats] = useState<{ user1: string; user2: string; messages: { sender: string; content: string }[] }[]>([]);
+  // const [chatList, setChatList] = useState<{ name: string; latestMessage: string }[]>([]);
+  const [chatList, setChatList] = useState<{ user1: string; user2: string; messages: { sender: string; content: string }[] }[]>([]);
+  const [userId, setUserId] = useState('');
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const chatList = [
-    { name: 'Steph Curry', latestMessage: 'Hey! How’s the report going?' },
-    { name: 'Tyson Mcflurry', latestMessage: 'Don’t forget the meeting at 3...' },
-    { name: 'Ronald McDonald', latestMessage: 'Can you review this document?' },
-  ];
+  useEffect(() => { //get current user id
+    const fetchId = async () => {
+      const email = localStorage.getItem('userEmail');
 
-  const handleChatClick = (name: string, message: string) => {
+      const { data, error } = await supabase
+        .from('user')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user data:', error);
+        return;
+      }
+
+      setUserId(data?.id);
+      setChatList([ // temp vals
+        { "user1": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "user2": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "messages": [{"sender": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "content": "my savior"}, {"sender": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "content": "galyeonhan yeonghon-iyeo"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "i don't believe"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "you're a liar"}]},
+        { "user1": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "user2": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "messages": [{"sender": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "content": "oh in a blink gone"}, {"sender": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "content": "blink gone"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "eorchusseo eopseo"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "blink and gone"}]}
+      ]); 
+    };
+    fetchId;
+  }, []);
+
+  useEffect(() => { 
+    const fetchChats = async () => {  
+      const thisuserId = userId;
+      const { data, error } = await supabase
+        .from('chat')
+        .select('user1, user2, messages')
+        .eq('user1', thisuserId);
+  
+      if (error) {
+        console.error('Error fetching chat data:', error);
+        return;
+      }
+
+      console.log('test');
+      console.log(data);
+  
+      setChatList(prevChatList => [...prevChatList, ...data]); 
+      setChatList([ // temp vals
+        { "user1": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "user2": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "messages": [{"sender": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "content": "my savior"}, {"sender": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "content": "galyeonhan yeonghon-iyeo"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "i don't believe"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "you're a liar"}]},
+        { "user1": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "user2": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "messages": [{"sender": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "content": "oh in a blink gone"}, {"sender": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "content": "blink gone"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "notchil su eopseo"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "blink and gone"}]}
+      ]); 
+    };
+    fetchChats();
+  }, [userId]);
+  
+  useEffect(() => {
+    // TODO: retrieve chats with current user from db
+    setChatList([ // temp vals
+      { "user1": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "user2": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "messages": [{"sender": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "content": "my savior"}, {"sender": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "content": "galyeonhan yeonghon-iyeo"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "i don't believe"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "you're a liar"}]},
+      { "user1": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "user2": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "messages": [{"sender": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "content": "oh in a blink gone"}, {"sender": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "content": "blink gone"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "notchil su eopseo"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "blink and gone"}]}
+    ]);
+  }, []);
+
+  // TODO: fix user2
+  const handleChatClick = (user2: string, user1: string, messages: { sender: string; content: string }[]) => {
     // Add the new chat to the active chats if it's not already there
-    const existingChat = activeChats.find(chat => chat.name === name);
+    const existingChat = activeChats.find(chat => chat.user2 === user2);
     if (!existingChat) {
-      setActiveChats([...activeChats, { name, messages: [{ sender: name, content: message }] }]);
+      setActiveChats([...activeChats, { user1, user2, messages}]);
     }
   };
 
+  // TODO: fix user2
   const closeChatbox = (name: string) => {
     // Remove the chat from active chats
-    setActiveChats(activeChats.filter(chat => chat.name !== name));
+    setActiveChats(activeChats.filter(chat => chat.user2 !== name));
   };
 
   return (
@@ -60,12 +119,12 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
         <ul className="mt-4 space-y-2 p-4">
           {chatList.map((chat) => (
             <li
-              key={chat.name}
+              key={chat.user2}
               className="cursor-pointer p-2 hover:bg-gray-700"
-              onClick={() => handleChatClick(chat.name, chat.latestMessage)}
+              onClick={() => handleChatClick(chat.user2, chat.user1, chat.messages)} // TODO: replace user2 with recipient, user1 below with latestmsg
             >
-              <div className="font-semibold">{chat.name}</div>
-              <div className="text-sm text-gray-400 truncate">{chat.latestMessage}</div>
+              <div className="font-semibold">{chat.user2}</div>
+              <div className="text-sm text-gray-400 truncate">{chat.user1}</div>
             </li>
           ))}
         </ul>
@@ -74,10 +133,10 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
       {/* Multiple Chatboxes */}
       {activeChats.map((chat, index) => (
         <Chatbox 
-          key={chat.name} 
+          key={chat.user2} // TODO: replace with recipient
           activeChat={chat} 
           isChatOpen={true} // All chatboxes are open by default
-          closeChatbox={() => closeChatbox(chat.name)} 
+          closeChatbox={() => closeChatbox(chat.user2)} // TODO: replace with recipient
           index={index} 
           totalChatCount={activeChats.length} // Pass total count of chatboxes
         />

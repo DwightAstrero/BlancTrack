@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import supabase from '../../lib/supabaseClient';
 
 interface ChatboxProps {
-  activeChat: { user1: string; user2: string; messages: { sender: string; content: string }[] };
+  activeChat: { id: BigInteger; user1: string; user2: string; messages: { sender: string; content: string }[] };
   isChatOpen: boolean;
   closeChatbox: () => void;
   index: number;
@@ -40,9 +40,9 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
     const fetchRecipient = async () => {
       var recipientId;
       console.log(username);
-      if (username == activeChat.user1) 
-        recipientId = activeChat.user2;
-      else recipientId = activeChat.user1;
+      if (username === activeChat.user2) 
+        recipientId = activeChat.user1;
+      else recipientId = activeChat.user2;
 
       const { data, error } = await supabase
         .from('user')
@@ -65,10 +65,38 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
   }, [username]);
 
   // TODO: set to update database
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (newMessage.trim() !== '') {
+      console.log({
+        chatId: activeChat.id,
+        newMessage: newMessage,
+        userId: username
+      });
+      
+      /* const { data, error } = await supabase
+      .rpc('add_message', {
+        'chatId': activeChat.id,
+        'newMessage': newMessage,
+        'userId': username
+      }); 
+
+      const newMessageData = {
+        sender: username,
+        content: newMessage,
+      }*/
+
       activeChat.messages.push({ sender: username, content: newMessage });
       setNewMessage('');
+
+      const { error } = await supabase
+      .from('chat')
+      .update({ messages: activeChat.messages }) // Use the updated messages
+      .eq('id', activeChat.id);
+
+      if (error) {
+        console.error('Error updating messages:', error);
+        return;
+      }
     }
   };
 

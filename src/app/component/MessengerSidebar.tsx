@@ -7,9 +7,9 @@ import supabase from '../../lib/supabaseClient';
 
 const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: string) => void }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeChats, setActiveChats] = useState<{ user1: string; user2: string; messages: { sender: string; content: string }[] }[]>([]);
+  const [activeChats, setActiveChats] = useState<{ id: BigInteger; user1: string; user2: string; messages: { sender: string; content: string }[] }[]>([]);
   // const [chatList, setChatList] = useState<{ name: string; latestMessage: string }[]>([]);
-  const [chatList, setChatList] = useState<{ user1: string; user2: string; messages: { sender: string; content: string }[] }[]>([]);
+  const [chatList, setChatList] = useState<{ id: BigInteger; user1: string; user2: string; messages: { sender: string; content: string }[] }[]>([]);
   const [userId, setUserId] = useState('');
 
   const toggleSidebar = () => {
@@ -32,57 +32,37 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
       }
 
       setUserId(data?.id);
-      setChatList([ // temp vals
-        { "user1": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "user2": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "messages": [{"sender": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "content": "my savior"}, {"sender": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "content": "galyeonhan yeonghon-iyeo"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "i don't believe"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "you're a liar"}]},
-        { "user1": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "user2": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "messages": [{"sender": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "content": "oh in a blink gone"}, {"sender": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "content": "blink gone"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "eorchusseo eopseo"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "blink and gone"}]}
-      ]); 
     };
-    fetchId;
-  }, []);
+    fetchId();
+  }, [userId]);
 
-  useEffect(() => { 
+  useEffect(() => { // fetch current user chats from db
     const fetchChats = async () => {  
-      const thisuserId = userId;
       const { data, error } = await supabase
         .from('chat')
-        .select('user1, user2, messages')
-        .eq('user1', thisuserId);
+        .select('*')
+        .or(`user1.eq.${userId},user2.eq.${userId}`);
   
       if (error) {
         console.error('Error fetching chat data:', error);
         return;
       }
-
-      console.log('test');
-      console.log(data);
   
-      setChatList(prevChatList => [...prevChatList, ...data]); 
-      setChatList([ // temp vals
-        { "user1": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "user2": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "messages": [{"sender": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "content": "my savior"}, {"sender": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "content": "galyeonhan yeonghon-iyeo"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "i don't believe"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "you're a liar"}]},
-        { "user1": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "user2": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "messages": [{"sender": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "content": "oh in a blink gone"}, {"sender": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "content": "blink gone"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "notchil su eopseo"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "blink and gone"}]}
-      ]); 
+      setChatList(prevChatList => [...prevChatList, ...data]);
     };
     fetchChats();
   }, [userId]);
-  
-  useEffect(() => {
-    // TODO: retrieve chats with current user from db
-    setChatList([ // temp vals
-      { "user1": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "user2": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "messages": [{"sender": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "content": "my savior"}, {"sender": "14669c02-1892-4d56-a2a5-8bfae226b4e3", "content": "galyeonhan yeonghon-iyeo"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "i don't believe"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "you're a liar"}]},
-      { "user1": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "user2": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "messages": [{"sender": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "content": "oh in a blink gone"}, {"sender": "9a745b4a-e38a-4adf-b65b-ebbf5ee78d1d", "content": "blink gone"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "notchil su eopseo"}, {"sender": "f67c517f-df5b-4d5d-bfc0-69387e21af6e", "content": "blink and gone"}]}
-    ]);
-  }, []);
 
-  // TODO: fix user2
-  const handleChatClick = (user2: string, user1: string, messages: { sender: string; content: string }[]) => {
+  // TODO: fix user2 (find matching/indicated chat)
+  const handleChatClick = (id: BigInteger, user2: string, user1: string, messages: { sender: string; content: string }[]) => {
     // Add the new chat to the active chats if it's not already there
     const existingChat = activeChats.find(chat => chat.user2 === user2);
     if (!existingChat) {
-      setActiveChats([...activeChats, { user1, user2, messages}]);
+      setActiveChats([...activeChats, {id, user1, user2, messages}]);
     }
   };
 
-  // TODO: fix user2
+  // TODO: fix user2 (same as above)
   const closeChatbox = (name: string) => {
     // Remove the chat from active chats
     setActiveChats(activeChats.filter(chat => chat.user2 !== name));
@@ -121,7 +101,7 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
             <li
               key={chat.user2}
               className="cursor-pointer p-2 hover:bg-gray-700"
-              onClick={() => handleChatClick(chat.user2, chat.user1, chat.messages)} // TODO: replace user2 with recipient, user1 below with latestmsg
+              onClick={() => handleChatClick(chat.id, chat.user2, chat.user1, chat.messages)} // TODO: replace user2 with recipient, user1 below with latestmsg
             >
               <div className="font-semibold">{chat.user2}</div>
               <div className="text-sm text-gray-400 truncate">{chat.user1}</div>

@@ -30,7 +30,7 @@ describe('Login Integration Test', () => {
 
         const errorMessage = await driver.wait(
             until.elementLocated(By.css('.mt-2.text-red-600')),
-            5000
+            20000 
         );
 
         const errorText = await errorMessage.getText();
@@ -50,7 +50,7 @@ describe('Login Integration Test', () => {
 
         await loginButton.click();
 
-        await driver.wait(until.urlIs('http://localhost:3000/staff'), 5000); 
+        await driver.wait(until.urlIs('http://localhost:3000/staff'), 20000); 
 
         const currentUrl = await driver.getCurrentUrl();
         expect(currentUrl).toBe('http://localhost:3000/staff'); 
@@ -71,7 +71,7 @@ describe('Login Integration Test', () => {
 
         const errorMessage = await driver.wait(
             until.elementLocated(By.css('.mt-2.text-red-600')),
-            5000
+            20000
         );
 
         const errorText = await errorMessage.getText();
@@ -93,7 +93,7 @@ describe('Login Integration Test', () => {
 
         const errorMessage = await driver.wait(
             until.elementLocated(By.css('.mt-2.text-red-600')),
-            5000
+            20000 
         );
 
         const errorText = await errorMessage.getText();

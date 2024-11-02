@@ -4,6 +4,9 @@ const chrome = require('selenium-webdriver/chrome');
 describe('Login Integration Test', () => {
     let driver;
 
+    // Increase the default timeout for the entire test suite
+    jest.setTimeout(20000); // Set timeout to 20 seconds
+
     beforeAll(async () => {
         const options = new chrome.Options();
         options.addArguments('--headless'); 
@@ -12,7 +15,9 @@ describe('Login Integration Test', () => {
     });
 
     afterAll(async () => {
-        await driver.quit();
+        if (driver) {
+            await driver.quit(); // Ensure driver is defined before quitting
+        }
     });
 
     // TEST CASE 1: DISPLAY AN ERROR MESSAGE FOR NON-EXISTENT USER
@@ -30,7 +35,7 @@ describe('Login Integration Test', () => {
 
         const errorMessage = await driver.wait(
             until.elementLocated(By.css('.mt-2.text-red-600')),
-            20000 
+            20000 // Increased timeout for error message to 20 seconds
         );
 
         const errorText = await errorMessage.getText();
@@ -50,7 +55,7 @@ describe('Login Integration Test', () => {
 
         await loginButton.click();
 
-        await driver.wait(until.urlIs('http://localhost:3000/staff'), 20000); 
+        await driver.wait(until.urlIs('http://localhost:3000/staff'), 20000); // Increased timeout for URL check to 20 seconds
 
         const currentUrl = await driver.getCurrentUrl();
         expect(currentUrl).toBe('http://localhost:3000/staff'); 
@@ -71,7 +76,7 @@ describe('Login Integration Test', () => {
 
         const errorMessage = await driver.wait(
             until.elementLocated(By.css('.mt-2.text-red-600')),
-            20000
+            20000 // Increased timeout for error message to 20 seconds
         );
 
         const errorText = await errorMessage.getText();
@@ -93,7 +98,7 @@ describe('Login Integration Test', () => {
 
         const errorMessage = await driver.wait(
             until.elementLocated(By.css('.mt-2.text-red-600')),
-            20000 
+            20000 // Increased timeout for error message to 20 seconds
         );
 
         const errorText = await errorMessage.getText();

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import supabase from '../../lib/supabaseClient';
+import MessengerSidebar from '../component/MessengerSidebar';
+import LeftSidebar from '../component/leftSidebar';
 
 interface Task {
   id: number;
@@ -25,6 +27,8 @@ const StaffDashboard = () => {
   const [staffName, setStaffName] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const [position, setPosition] = useState('');
+  const [isChatOpen, setIsChatOpen] = useState(false); 
+  const [activeChat, setActiveChat] = useState<{ name: string; message: string } | null>(null);  //CHAT
   const router = useRouter();
 
   useEffect(() => {
@@ -60,7 +64,7 @@ const StaffDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (position && position != 'staff') {
+    if (position && position !== 'staff') {
       router.push(`/${position}`);
     }
   }, [position]);
@@ -89,6 +93,7 @@ const StaffDashboard = () => {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+  
 
   const handleFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setFilterStatus(event.target.value);
@@ -115,6 +120,11 @@ const StaffDashboard = () => {
     fetchStaffName();
   }, []);
 
+  const openChat = (name: string, message: string) => {
+    setActiveChat({ name, message });
+    setIsChatOpen(true);
+  };
+
   useEffect(() => {
     const fetchUserId = async () => {
       const email = localStorage.getItem('userEmail');
@@ -134,55 +144,25 @@ const StaffDashboard = () => {
 
   const filteredTasks = tasks.filter(task => task.staff === staffName && (filterStatus ? task.status === filterStatus : true));
 
+  // Function to toggle chatbox
+  const toggleChatbox = () => {
+    setIsChatOpen(!isChatOpen);
+  };
+
+  
+
   return (
     <div className="min-h-screen bg-brand-cream flex">
 
-        {/* Hamburger Icon */}
-        {!isSidebarOpen && (
-          <button className="absolute top-4 left-4 z-10 text-brown" onClick={toggleSidebar}>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-            </svg>
-          </button>
-        )}
-
         {/* Sidebar */}
-        <div className={`fixed h-screen bg-brand-lgreen text-white p-4 flex flex-col ${isSidebarOpen ? 'left-0' : '-left-full'} transition-all duration-300 ease-in-out`}>
-          <div className="flex justify-between mb-4">
-            <h2 className="text-sm">BlancTrack</h2>
-            <button className="text-white" onClick={toggleSidebar}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-          <ul className="space-y-2">
-            <li>
-              <Link href={`/account/${userId}`}>
-                <h2 className="block text-white hover:text-brand-dgreen">Account</h2>
-              </Link>
-            </li>
-            <li>
-              <Link href="/staff">
-                <h2 className="block text-white hover:text-brand-dgreen">Dashboard</h2>
-              </Link>
-            </li>
-            <li>
-              <Link href="/announcement">
-                <h2 className="block text-white hover:text-brand-dgreen">Announcements</h2>
-              </Link>
-            </li>
-          </ul>
-          <div className="mt-36 flex items-center">
-            <button onClick={() => handleLogout()} className="px-4 py-2 bg-rose-500 text-white rounded hover:bg-red-400 flex items-center space-x-2">
-              <h2 className="text-sm">Log out</h2>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-box-arrow-right" viewBox="0 0 16 16">
-                <path fillRule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"/>
-                <path fillRule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
-              </svg>
-            </button>
-          </div>
-        </div>
+        <LeftSidebar  isOpen={isSidebarOpen}
+                    toggleSidebar={toggleSidebar}
+                    handleLogout={handleLogout}
+                    userId={userId} onClose={function (): void {
+                      throw new Error('Function not implemented.');
+                    } }
+                    position={position}
+                    />
 
         {/* Main Content */}
         <div className="flex-grow flex items-center justify-center p-8">
@@ -227,6 +207,25 @@ const StaffDashboard = () => {
             </div>
             </div>
           </div>
+
+      {/* Messenger Sidebar */}
+      <MessengerSidebar openChat={openChat} />
+
+      {/* Chatbox */}
+      {activeChat && (
+        <div className={`fixed bottom-0 right-0 w-96 transition-transform duration-300 transform ${isChatOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+          <div className="bg-white border border-gray-300 rounded-t-lg shadow-lg overflow-hidden">
+            <div className="p-4 bg-gray-800 text-white cursor-pointer" onClick={() => setIsChatOpen(false)}>
+              Chat with {activeChat.name}
+            </div>
+            <div className="p-4" style={{ height: '300px', overflowY: 'scroll' }}>
+              {/* Display messages */}
+              <div className="message">{activeChat.message}</div>
+            </div>
+          </div>
+          <div className="bg-gray-800 h-4 shadow-inner"></div>
+        </div>
+      )}
     </div>
   );
 };

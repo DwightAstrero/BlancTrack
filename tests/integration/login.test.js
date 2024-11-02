@@ -1,18 +1,10 @@
 const { Builder, By, Key, until } = require('selenium-webdriver');
-const chrome = require('selenium-webdriver/chrome');
 
 describe('Login Integration Test', () => {
     let driver;
 
     beforeAll(async () => {
-        jest.setTimeout(10000);
-
-        const options = new chrome.Options();
-        options.addArguments('--headless');
-        options.addArguments('--no-sandbox');
-        options.addArguments('--disable-dev-shm-usage'); 
-
-        driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
+        driver = await new Builder().forBrowser('chrome').build();
     });
 
     afterAll(async () => {
@@ -32,18 +24,13 @@ describe('Login Integration Test', () => {
 
         await loginButton.click();
 
-        try {
-            const errorMessage = await driver.wait(
-                until.elementLocated(By.css('.mt-2.text-red-600')),
-                10000
-            );
+        const errorMessage = await driver.wait(
+            until.elementLocated(By.css('.mt-2.text-red-600')),
+            5000
+        );
 
-            const errorText = await errorMessage.getText();
-            expect(errorText).toBe('User does not exist.');
-        } catch (err) {
-            console.error('Error finding error message:', err);
-            throw err;
-        }
+        const errorText = await errorMessage.getText();
+        expect(errorText).toBe('User does not exist.');
     });
 
     // TEST CASE 2: SUCCESSFUL LOGIN WITH VALID CREDENTIALS
@@ -59,7 +46,7 @@ describe('Login Integration Test', () => {
 
         await loginButton.click();
 
-        await driver.wait(until.urlIs('http://localhost:3000/staff'), 10000);
+        await driver.wait(until.urlIs('http://localhost:3000/staff'), 5000); 
 
         const currentUrl = await driver.getCurrentUrl();
         expect(currentUrl).toBe('http://localhost:3000/staff'); 
@@ -78,18 +65,13 @@ describe('Login Integration Test', () => {
 
         await loginButton.click();
 
-        try {
-            const errorMessage = await driver.wait(
-                until.elementLocated(By.css('.mt-2.text-red-600')),
-                10000
-            );
+        const errorMessage = await driver.wait(
+            until.elementLocated(By.css('.mt-2.text-red-600')),
+            5000
+        );
 
-            const errorText = await errorMessage.getText();
-            expect(errorText).toBe('User does not exist.'); 
-        } catch (err) {
-            console.error('Error finding error message:', err);
-            throw err;
-        }
+        const errorText = await errorMessage.getText();
+        expect(errorText).toBe('User does not exist.'); 
     });
 
     // TEST CASE 4: DISPLAY ERROR MESSAGE FOR EMPTY EMAIL AND PASSWORD
@@ -105,17 +87,12 @@ describe('Login Integration Test', () => {
 
         await loginButton.click();
 
-        try {
-            const errorMessage = await driver.wait(
-                until.elementLocated(By.css('.mt-2.text-red-600')),
-                10000
-            );
+        const errorMessage = await driver.wait(
+            until.elementLocated(By.css('.mt-2.text-red-600')),
+            5000
+        );
 
-            const errorText = await errorMessage.getText();
-            expect(errorText).toBe('User does not exist.'); 
-        } catch (err) {
-            console.error('Error finding error message:', err);
-            throw err;
-        }
+        const errorText = await errorMessage.getText();
+        expect(errorText).toBe('User does not exist.'); 
     });
 });

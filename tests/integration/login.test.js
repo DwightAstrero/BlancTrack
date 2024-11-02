@@ -1,10 +1,14 @@
 const { Builder, By, Key, until } = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
 
 describe('Login Integration Test', () => {
     let driver;
 
     beforeAll(async () => {
-        driver = await new Builder().forBrowser('chrome').build();
+        const options = new chrome.Options();
+        options.addArguments('--headless'); 
+
+        driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
     });
 
     afterAll(async () => {

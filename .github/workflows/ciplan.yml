@@ -9,7 +9,6 @@ on:
   pull_request:
     branches:
       - develop
-  workflow_dispatch:  # Allows manual triggering
 
 permissions:
   contents: write
@@ -24,8 +23,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Fetch all history for all branches
         
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -70,8 +67,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Fetch all history for all branches
         
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -118,8 +113,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Fetch all history for all branches
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -151,13 +144,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Fetch all history for all branches
         
       - name: Set Git user
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
+
+      - name: Fetch and checkout develop branch
+        run: |
+          git fetch origin develop:develop # Fetch the remote 'develop' branch and create a local 'develop' branch
+          git checkout develop
 
       - name: Merge Develop into Release Branch
         run: |
@@ -166,7 +162,7 @@ jobs:
           else
             git checkout -b release
           fi
-          git merge develop
+          git merge develop || { echo "Merge conflict occurred"; exit 1; }
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/DwightAstrero/BlancTrack.git release
 
   deploy:
@@ -177,8 +173,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  
 
       - name: Set Git user
         run: |

@@ -9,6 +9,8 @@ on:
   pull_request:
     branches:
       - develop
+    types:
+      - closed # Trigger when the PR is closed (merged)
 
 permissions:
   contents: write
@@ -140,7 +142,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: [integration-test]
-    if: github.event_name == 'pull_request' # Only run on pull request events
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true # Run when the PR is merged
 
     steps:
       - name: Checkout code

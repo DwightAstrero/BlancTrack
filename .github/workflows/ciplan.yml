@@ -192,7 +192,7 @@ jobs:
           echo "Merging to main and develop..."
           git fetch origin
           git checkout main
-          git merge origin/release || { echo "Merge failed"; exit 1; }
+          git merge origin/release --allow-unrelated-histories || { echo "Merge failed"; exit 1; }
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/DwightAstrero/BlancTrack.git main
           git checkout develop
           git merge origin/release || { echo "Merge failed"; exit 1; }

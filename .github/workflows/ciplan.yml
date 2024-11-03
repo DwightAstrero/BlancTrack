@@ -57,7 +57,7 @@ jobs:
           cp -r .next/* build/ || echo "No files found in .next directory to copy."
         
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: build/
@@ -103,7 +103,7 @@ jobs:
           fi
 
       - name: Upload Test Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-reports
           path: test-reports/
@@ -134,7 +134,7 @@ jobs:
         run: npm run integration-test  
 
       - name: Upload Integration Test Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: integration-test-reports
           path: integration-test-reports/

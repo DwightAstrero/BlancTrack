@@ -179,7 +179,7 @@ jobs:
         run: npm install -g vercel
 
       - name: Deploy Application to Vercel
-        run: vercel --prod --token=$VERCEL_TOKEN
+        run: vercel --prod --token=$VERCEL_TOKEN --confirm
       #- name: Set Git user
         #run: |
          # git config --global user.name "GitHub Action"

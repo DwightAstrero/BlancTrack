@@ -140,6 +140,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: [integration-test]
+    if: github.event_name == 'pull_request' # Only run on pull request events
 
     steps:
       - name: Checkout code
@@ -150,11 +151,6 @@ jobs:
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
 
-      - name: Fetch and checkout develop branch
-        run: |
-          git fetch origin develop:develop # Fetch the remote 'develop' branch and create a local 'develop' branch
-          git checkout develop
-
       - name: Merge Develop into Release Branch
         run: |
           if git show-ref --quiet refs/heads/release; then
@@ -162,13 +158,13 @@ jobs:
           else
             git checkout -b release
           fi
-          git merge develop || { echo "Merge conflict occurred"; exit 1; }
+          git merge origin/develop # Change here to specify remote branch
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/DwightAstrero/BlancTrack.git release
 
   deploy:
     runs-on: ubuntu-latest
     needs: release
-    if: github.event_name == 'workflow_dispatch' # Manually trigger deployment
+    if: github.event_name == 'workflow_dispatch' # Only trigger deployment manually
 
     steps:
       - name: Checkout code

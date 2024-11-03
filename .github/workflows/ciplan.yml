@@ -178,12 +178,8 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel
 
-      - name: Authenticate with Vercel
-        run: vercel login --token $VERCEL_TOKEN
-
       - name: Deploy Application to Vercel
-        run: |
-          vercel --prod --token=$VERCEL_TOKEN
+        run: vercel --prod --token=$VERCEL_TOKEN
       #- name: Set Git user
         #run: |
          # git config --global user.name "GitHub Action"

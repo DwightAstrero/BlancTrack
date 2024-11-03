@@ -168,21 +168,33 @@ jobs:
     needs: release
     if: github.event_name == 'workflow_dispatch' # Only trigger deployment manually
 
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set Git user
-        run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
+      - name: Install Vercel CLI
+        run: npm install -g vercel
 
-      - name: Deploy Application
+      - name: Authenticate with Vercel
+        run: vercel login --token $VERCEL_TOKEN
+
+      - name: Deploy Application to Vercel
         run: |
-          echo "Deploying application..."
-          git checkout main
-          git merge release
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/DwightAstrero/BlancTrack.git main
-          git checkout develop
-          git merge release
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/DwightAstrero/BlancTrack.git develop
+          vercel --prod --token=$VERCEL_TOKEN
+      #- name: Set Git user
+        #run: |
+         # git config --global user.name "GitHub Action"
+         # git config --global user.email "action@github.com"
+
+      #- name: Deploy Application
+      #  run: |
+      #    echo "Deploying application..."
+      #    git checkout main
+       #   git merge release
+       #   git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/DwightAstrero/BlancTrack.git main
+       #   git checkout develop
+       #   git merge release
+        #  git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/DwightAstrero/BlancTrack.git develop

@@ -10,6 +10,9 @@ on:
     branches:
       - develop
 
+permissions:
+  contents: write
+
 env:
   NODE_VERSION: '20.11.1'
 
@@ -142,12 +145,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         
-      - name: Merge Develop into Release Branch
+      - name: Set Git user
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          git checkout -b release
-          git merge develop
+
+      - name: Fetch and checkout develop branch
+        run: |
+          git fetch origin develop:develop # Fetch the remote 'develop' branch and create a local 'develop' branch
+          git checkout develop
+
+      - name: Merge Develop into Release Branch
+        run: |
+          if git show-ref --quiet refs/heads/release; then
+            git checkout release
+          else
+            git checkout -b release
+          fi
+          git merge develop || { echo "Merge conflict occurred"; exit 1; }
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/DwightAstrero/BlancTrack.git release
 
   deploy:
@@ -159,11 +174,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set Git user
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+
       - name: Deploy Application
         run: |
           echo "Deploying application..."
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
           git checkout main
           git merge release
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/DwightAstrero/BlancTrack.git main

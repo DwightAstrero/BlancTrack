@@ -161,8 +161,8 @@ jobs:
           else
             git checkout -b release
           fi
-          git pull --ff-only origin release  # Pull latest changes to avoid conflicts
-          git merge origin/develop || { echo "Merge failed"; exit 1; }
+          # Perform a no-fast-forward merge to handle diverging branches
+          git merge --no-ff origin/develop || { echo "Merge failed"; exit 1; }
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/DwightAstrero/BlancTrack.git release
 
   deploy:

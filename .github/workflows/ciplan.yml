@@ -156,13 +156,9 @@ jobs:
       - name: Merge Develop into Release Branch
         run: |
           git fetch origin
-          if git show-ref --quiet refs/heads/release; then
-            git checkout release
-          else
-            git checkout -b release
-          fi
-          # Perform a no-fast-forward merge to handle diverging branches
-          git merge --no-ff origin/develop || { echo "Merge failed"; exit 1; }
+          git checkout release
+          git pull origin release --no-ff
+          git merge origin/develop
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/DwightAstrero/BlancTrack.git release
 
   deploy:

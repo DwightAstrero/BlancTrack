@@ -1,32 +1,93 @@
 // MessengerSidebar.tsx
-import React, { useState } from 'react';
+'use client'
+
+import React, { useState, useEffect } from 'react';
 import Chatbox from '../component/chatbox'; // Import the Chatbox component
+import supabase from '../../lib/supabaseClient';
 
 const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: string) => void }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeChats, setActiveChats] = useState<{ name: string; messages: { sender: string; content: string }[] }[]>([]);
+  const [activeChats, setActiveChats] = useState<{ id: BigInteger; user1: string; user2: string; messages: { sender: string; content: string }[]; recipient: string }[]>([]);
+  const [chatList, setChatList] = useState<{ id: BigInteger; user1: string; user2: string; messages: { sender: string; content: string }[]; recipient: string; lastMessage: string }[]>([]);
+  const [userId, setUserId] = useState('');
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const chatList = [
-    { name: 'Steph Curry', latestMessage: 'Hey! How’s the report going?' },
-    { name: 'Tyson Mcflurry', latestMessage: 'Don’t forget the meeting at 3...' },
-    { name: 'Ronald McDonald', latestMessage: 'Can you review this document?' },
-  ];
+  useEffect(() => { //get current user id
+    const fetchId = async () => {
+      const email = localStorage.getItem('userEmail');
 
-  const handleChatClick = (name: string, message: string) => {
+      const { data, error } = await supabase
+        .from('user')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user data:', error);
+        return;
+      }
+
+      setUserId(data?.id);
+    };
+    fetchId();
+  }, [userId]);
+
+  useEffect(() => { // fetch current user chats from db
+    const fetchChats = async () => {  
+      const { data: chatData, error } = await supabase
+        .from('chat')
+        .select('*')
+        .or(`user1.eq.${userId},user2.eq.${userId}`);
+  
+      if (error) {
+        console.error('Error fetching chat data:', error);
+        return;
+      }
+
+      const recipientChats = await Promise.all( // add recipient name
+        chatData.map(async (chats) => {
+          const recipientId = chats.user1 === userId ? chats.user2 : chats.user1;
+    
+          const { data, error } = await supabase
+            .from('user')
+            .select('firstname, lastname')
+            .eq('id', recipientId)
+            .single();
+    
+          if (error) {
+            console.error('Error fetching recipient data:', error);
+            return { ...chats, recipient: null }; 
+          }
+
+          return { ...chats, recipient: `${data?.firstname} ${data?.lastname}` };
+        })
+      );
+
+      const finalChats = // add latest message
+        recipientChats.map((chats) => {
+          return { ...chats, lastMessage: chats?.messages[chats?.messages.length - 1].content };
+        }) 
+
+      if(finalChats && (finalChats !== chatList))  
+        setChatList(finalChats);
+    };
+    fetchChats(); 
+  });
+
+  const handleChatClick = (id: BigInteger, user2: string, user1: string, messages: { sender: string; content: string }[], recipient: string) => {
     // Add the new chat to the active chats if it's not already there
-    const existingChat = activeChats.find(chat => chat.name === name);
+    const existingChat = activeChats.find(chat => chat.id.toString() === id.toString());
     if (!existingChat) {
-      setActiveChats([...activeChats, { name, messages: [{ sender: name, content: message }] }]);
+      setActiveChats([...activeChats, {id, user1, user2, messages, recipient}]);
     }
   };
 
   const closeChatbox = (name: string) => {
     // Remove the chat from active chats
-    setActiveChats(activeChats.filter(chat => chat.name !== name));
+    setActiveChats(activeChats.filter(chat => chat.id.toString() !== name));
   };
 
   return (
@@ -60,12 +121,12 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
         <ul className="mt-4 space-y-2 p-4">
           {chatList.map((chat) => (
             <li
-              key={chat.name}
+              key={chat.id.toString()}
               className="cursor-pointer p-2 hover:bg-gray-700"
-              onClick={() => handleChatClick(chat.name, chat.latestMessage)}
+              onClick={() => handleChatClick(chat.id, chat.user2, chat.user1, chat.messages, chat.recipient)}
             >
-              <div className="font-semibold">{chat.name}</div>
-              <div className="text-sm text-gray-400 truncate">{chat.latestMessage}</div>
+              <div className="font-semibold">{chat.recipient}</div>
+              <div className="text-sm text-gray-400 truncate">{chat.lastMessage}</div> {/* todo */}
             </li>
           ))}
         </ul>
@@ -74,10 +135,10 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
       {/* Multiple Chatboxes */}
       {activeChats.map((chat, index) => (
         <Chatbox 
-          key={chat.name} 
+          key={chat.id.toString()}
           activeChat={chat} 
           isChatOpen={true} // All chatboxes are open by default
-          closeChatbox={() => closeChatbox(chat.name)} 
+          closeChatbox={() => closeChatbox(chat.id.toString())}
           index={index} 
           totalChatCount={activeChats.length} // Pass total count of chatboxes
         />

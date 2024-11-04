@@ -142,7 +142,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: [integration-test]
-    if: (github.event.pull_request.merged == true)
+    if: github.event.pull_request.merged == true
 
     steps:
       - name: Checkout code
@@ -158,13 +158,13 @@ jobs:
           git fetch origin
           git checkout release
           git pull origin release --no-ff
-          git merge origin/develop
+          git merge origin/develop --allow-unrelated-histories || { echo "Merge failed"; exit 1; }
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/DwightAstrero/BlancTrack.git release
 
   deploy:
     runs-on: ubuntu-latest
     needs: integration-test
-    if: (github.event.pull_request.merged == true)
+    if: github.event.pull_request.merged == true
 
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}

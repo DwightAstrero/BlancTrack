@@ -19,7 +19,6 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
   useEffect(() => {
     const fetchAuthorName = async () => {
       const email = localStorage.getItem('userEmail');
-
       const { data, error } = await supabase
         .from('user')
         .select('id')
@@ -37,12 +36,18 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
   }, []);
 
   useEffect(() => {
-    const fetchRecipient = async () => {
-      var recipientId;
-      console.log(username);
-      if (username === activeChat.user2) 
+    if (!username) return;
+
+    const determineRecipient = async () => {
+      let recipientId;
+      if (username === activeChat.user1) {
+        recipientId = activeChat.user2;
+      } else if (username === activeChat.user2) {
         recipientId = activeChat.user1;
-      else recipientId = activeChat.user2;
+      } else {
+        console.error("Error: Active user is not part of this chat");
+        return;
+      }
 
       const { data, error } = await supabase
         .from('user')
@@ -51,51 +56,33 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
         .single();
 
       if (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching recipient data:', error);
         return;
       }
 
-      const fName = data?.firstname;
-      const lName = data?.lastname;
-      const fullName = `${fName} ${lName}`;
-
+      const fullName = `${data?.firstname} ${data?.lastname}`;
       setRecipient(fullName);
-    }; 
-    fetchRecipient();
-  }, [username]);
+    };
 
-  // TODO: set to update database
+    determineRecipient();
+  }, [username, activeChat]);
+
   const handleSendMessage = async () => {
     if (newMessage.trim() !== '') {
-      console.log({
-        chatId: activeChat.id,
-        newMessage: newMessage,
-        userId: username
-      });
-      
-      /* const { data, error } = await supabase
-      .rpc('add_message', {
-        'chatId': activeChat.id,
-        'newMessage': newMessage,
-        'userId': username
-      }); 
+      const messageData = { sender: username, content: newMessage };
 
-      const newMessageData = {
-        sender: username,
-        content: newMessage,
-      }*/
-
-      activeChat.messages.push({ sender: username, content: newMessage });
+      // Update local state
+      activeChat.messages.push(messageData);
       setNewMessage('');
 
+      // Update database with the new message
       const { error } = await supabase
-      .from('chat')
-      .update({ messages: activeChat.messages }) // Use the updated messages
-      .eq('id', activeChat.id);
+        .from('chat')
+        .update({ messages: activeChat.messages })
+        .eq('id', activeChat.id);
 
       if (error) {
         console.error('Error updating messages:', error);
-        return;
       }
     }
   };
@@ -109,25 +96,24 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
     >
       <div className="bg-white border border-gray-300 rounded-t-lg shadow-lg overflow-hidden">
         <div className="p-4 bg-gray-800 text-white cursor-pointer" onClick={closeChatbox}>
-          {recipient} {/* /////activeChat.name//////////////////////////// */}
+          {recipient} {/* Display the recipient's name */}
         </div>
         <div className="p-4" style={{ maxHeight: '300px', overflowY: 'scroll' }}>
           {/* Display messages */}
           {activeChat.messages.map((msg, idx) => (
             <div key={idx} className={`my-2 flex flex-col`}>
               {msg.sender !== username && (
-                // ///////////////////////msg.sender/////////////////////////////
-                <span className="text-gray-500 text-xs mb-1">{recipient}</span> // Display name for other users
+                <span className="text-gray-500 text-xs mb-1">{recipient}</span> // Display name for messages from the recipient
               )}
               <div
                 className={`p-2 ${
                   msg.sender === username
-                    ? 'bg-blue-200 text-blue-800 ml-auto rounded-tl-lg rounded-tr-lg rounded-bl-lg' // User message (right-aligned, rounded top and left)
-                    : 'bg-gray-200 text-gray-800 mr-auto rounded-tl-lg rounded-tr-lg rounded-br-lg' // Other user message (left-aligned, rounded top and right)
+                    ? 'bg-blue-200 text-blue-800 ml-auto rounded-tl-lg rounded-tr-lg rounded-bl-lg' // User message
+                    : 'bg-gray-200 text-gray-800 mr-auto rounded-tl-lg rounded-tr-lg rounded-br-lg' // Recipient message
                 }`}
-                style={{ maxWidth: '75%', wordBreak: 'break-word' }} // Set maximum width for messages
+                style={{ maxWidth: '75%', wordBreak: 'break-word' }}
               >
-                <strong>{msg.sender === username ? '' : ''}</strong> {msg.content} {/* No strong tag for user */}
+                {msg.content}
               </div>
             </div>
           ))}

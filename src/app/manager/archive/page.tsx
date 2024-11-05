@@ -1,5 +1,3 @@
-// File: /manager/archive/page.tsx
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -126,9 +124,9 @@ const Archive = () => {
       </Link>
 
       {/* Filter Options */}
-      <div className="mb-4 flex flex-row space-x-6 ">
+      <div className="mb-4 flex flex-row space-x-6">
         <div className="flex flex-col">
-          <label htmlFor="start-date" className="block mb-1">Start Date</label>
+          <label htmlFor="start-date" className="block mb-1 font-bold">Start Date</label>
           <input 
             id="start-date"
             type="date" 
@@ -138,7 +136,7 @@ const Archive = () => {
           />
         </div>
         <div className="flex flex-col">
-          <label htmlFor="end-date" className="block mb-1">End Date</label>
+          <label htmlFor="end-date" className="block mb-1 font-bold">End Date</label>
           <input 
             id="end-date"
             type="date" 
@@ -148,7 +146,7 @@ const Archive = () => {
           />
         </div>
         <div className="flex flex-col">
-          <label htmlFor="task-type" className="block mb-1">Task Type</label>
+          <label htmlFor="task-type" className="block mb-1 font-bold">Task Type</label>
           <select 
             id="task-type"
             value={taskType} 
@@ -162,7 +160,7 @@ const Archive = () => {
           </select>
         </div>
         <div className="flex flex-col">
-          <label htmlFor="employee" className="block mb-1">Employee</label>
+          <label htmlFor="employee" className="block mb-1 font-bold">Employee</label>
           <select 
             id="employee"
             value={employee} 

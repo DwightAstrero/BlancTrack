@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { act } from 'react';
 import Archive from './page';
 import { useRouter } from 'next/navigation';
 
@@ -26,13 +27,17 @@ jest.mock('next/navigation', () => ({
 
 describe('Archive Component Rendering', () => {
   it('renders the Archive component', async () => {
-    render(<Archive />);
+    await act(async () => {
+      render(<Archive />);
+    });
     const headingElement = screen.getByText(/Archived Tasks/i);
     expect(headingElement).toBeInTheDocument();
   });
 
   it('renders the filter inputs', async () => {
-    render(<Archive />);
+    await act(async () => {
+      render(<Archive />);
+    });
     const startDateInput = screen.getByLabelText(/Start Date/i);
     expect(startDateInput).toBeInTheDocument();
 
@@ -47,7 +52,9 @@ describe('Archive Component Rendering', () => {
   });
 
   it('renders filter options for task types', async () => {
-    render(<Archive />);
+    await act(async () => {
+      render(<Archive />);
+    });
     const taskTypeSelect = screen.getByLabelText(/Task Type/i);
     expect(taskTypeSelect).toHaveTextContent('All');
     expect(taskTypeSelect).toHaveTextContent('High Priority');
@@ -56,7 +63,9 @@ describe('Archive Component Rendering', () => {
   });
 
   it('renders filter options for employees', async () => {
-    render(<Archive />);
+    await act(async () => {
+      render(<Archive />);
+    });
     const employeeSelect = screen.getByLabelText(/Employee/i);
     expect(employeeSelect).toHaveTextContent('All');
   });

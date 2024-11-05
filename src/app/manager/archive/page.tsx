@@ -33,6 +33,7 @@ const Archive = () => {
   const [taskType, setTaskType] = useState<string>('');
   const [employee, setEmployee] = useState<string>('');
   const [employees, setEmployees] = useState<User[]>([]);
+  const [employeeTaskCount, setEmployeeTaskCount] = useState<Record<string, number>>({});
   const router = useRouter();
   const [managerName, setManagerName] = useState('');
 
@@ -94,6 +95,19 @@ const Archive = () => {
 
     fetchEmployees();
   }, []);
+
+  useEffect(() => {
+    const countCompletedTasksByEmployee = () => {
+      const count: Record<string, number> = {};
+      completedTasks.forEach(task => {
+        const employeeName = task.staff;
+        count[employeeName] = (count[employeeName] || 0) + 1;
+      });
+      setEmployeeTaskCount(count);
+    };
+
+    countCompletedTasksByEmployee();
+  }, [completedTasks]);
 
   const handleFilterChange = () => {
     const filtered = completedTasks.filter(task => {
@@ -168,11 +182,16 @@ const Archive = () => {
             className="border border-gray-300 rounded p-2 h-10"
           >
             <option value="">All</option>
-            {employees.map(emp => (
-              <option key={emp.id} value={`${emp.firstname} ${emp.lastname}`}>
-                {emp.firstname} {emp.lastname}
-              </option>
-            ))}
+            {employees.map(emp => {
+              const fullName = `${emp.firstname} ${emp.lastname}`;
+              const hasCompletedTasks = employeeTaskCount[fullName] > 0;
+
+              return (
+                <option key={emp.id} value={fullName} disabled={!hasCompletedTasks}>
+                  {fullName}
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>

@@ -1,17 +1,19 @@
-// MessengerSidebar.tsx
+// messengerSidebar.tsx
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Chatbox from '../component/chatbox'; // Import the Chatbox component
 import supabase from '../../lib/supabaseClient';
 
 const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: string) => void }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeChats, setActiveChats] = useState<{ id: BigInteger; user1: string; user2: string; messages: { sender: string; content: string }[] }[]>([]);
-  // const [chatList, setChatList] = useState<{ name: string; latestMessage: string }[]>([]);
   const [chatList, setChatList] = useState<{ id: BigInteger; user1: string; user2: string; messages: { sender: string; content: string }[] }[]>([]);
   const [userId, setUserId] = useState('');
-
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<string[]>([]); // Temporary user list
+  const [isSearchActive, setIsSearchActive] = useState(false); // Track if the search is active
+  
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -68,6 +70,25 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
     setActiveChats(activeChats.filter(chat => chat.user2 !== name));
   };
 
+  // Function to handle search input changes
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+
+    // Filtered results from a temporary user list
+    const tempUsers = ['MJ', 'Steph Curry', 'Kobe', 'LeBron'];
+    setSearchResults(tempUsers.filter(user => user.toLowerCase().includes(value.toLowerCase())));
+  };
+
+  // Handle clicking a search result
+  const handleResultClick = (user: string) => {
+    setSearchTerm('');
+    setSearchResults([]);
+    setIsSearchActive(false); // Hide search results after selection
+    // TODO: Add the selected user to the active chats
+    //handleChatClick(0, user, userId, []); // Not Working.
+  };
+
   return (
     <div>
       <button
@@ -96,6 +117,33 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
             </svg>
           </button>
         </div>
+        
+        {/* Search bar */}
+        <div className="p-4 border-b border-gray-700">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            onFocus={() => setIsSearchActive(true)} // Show results when search bar is focused
+            onBlur={() => setTimeout(() => setIsSearchActive(false), 150)} // Delay hiding to allow clicking
+            placeholder="Search users..."
+            className="w-full px-2 py-1 rounded bg-gray-800 text-white"
+          />
+          {isSearchActive && searchResults.length > 0 && (
+            <div className="absolute w-56 bg-gray-800 border border-gray-700 mt-1 rounded shadow-lg">
+              {searchResults.map((result, index) => (
+                <div
+                  key={index}
+                  onClick={() => handleResultClick(result)}
+                  className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                >
+                  {result}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <ul className="mt-4 space-y-2 p-4">
           {chatList.map((chat) => (
             <li

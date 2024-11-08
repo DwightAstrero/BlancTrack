@@ -11,14 +11,15 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
   const [chatList, setChatList] = useState<{ id: BigInteger; user1: string; user2: string; messages: { sender: string; content: string }[]; recipient: string; lastMessage: string }[]>([]);
   const [userId, setUserId] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<string[]>([]); // Temporary user list
+  const [userList, setUserList] = useState<{ id: BigInteger; name: string }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ id: BigInteger; name: string }[]>([]);
   const [isSearchActive, setIsSearchActive] = useState(false); // Track if the search is active
   
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  useEffect(() => { //get current user id
+  useEffect(() => { //get current user id and user list
     const fetchId = async () => {
       const email = localStorage.getItem('userEmail');
 
@@ -36,6 +37,31 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
       setUserId(data?.id);
     };
     fetchId();
+  }, [userId]);
+
+  useEffect(() => { // get user list
+    const fetchUsers = async () => {  
+      var listUsers;
+      const { data: users, error } = await supabase
+        .from('user')
+        .select('id, firstname, lastname')
+        .neq('id', userId);
+
+      if (error) {
+        console.error('Error fetching user data:', error);
+        return;
+      }
+
+      if(users)
+        listUsers = 
+          users.map((user: { id: BigInteger, firstname: string, lastname: string; }) => {
+            return { id: user.id, name: `${user.firstname} ${user.lastname}` };
+          });
+
+      setUserList(listUsers);
+      console.log(listUsers);
+    };
+    fetchUsers();
   }, [userId]);
 
   useEffect(() => { // fetch current user chats from db
@@ -71,7 +97,11 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
 
       const finalChats = // add latest message
         recipientChats.map((chats: { messages: string | any[]; }) => {
-          return { ...chats, lastMessage: chats?.messages[chats?.messages.length - 1].content };
+          var lastMessage;
+          if (chats?.messages.length > 0)
+            lastMessage = chats?.messages[chats?.messages.length - 1].content;
+          else lastMessage = "New chat";
+          return { ...chats, lastMessage };
         }) 
 
       if(finalChats && (finalChats !== chatList))  
@@ -98,18 +128,25 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
     const value = e.target.value;
     setSearchTerm(value);
 
-    // Filtered results from a temporary user list
-    const tempUsers = ['MJ', 'Steph Curry', 'Kobe', 'LeBron'];
-    setSearchResults(tempUsers.filter(user => user.toLowerCase().includes(value.toLowerCase())));
+    setSearchResults(userList.filter(user => user.name.toLowerCase().includes(value.toLowerCase())));
   };
 
   // Handle clicking a search result
-  const handleResultClick = (user: string) => {
+  const handleResultClick = async (recipientId: BigInteger) => {
     setSearchTerm('');
     setSearchResults([]);
     setIsSearchActive(false); // Hide search results after selection
-    // TODO: Add the selected user to the active chats
-    //handleChatClick(0, user, userId, []); // Not Working.
+
+    const { data, error } = await supabase
+      .from('chat')
+      .insert([
+        { user1: userId, user2: recipientId, messages: [] }
+    ]);
+
+    if (error) {
+      console.error('Failed to add new chat:', error);
+      return;
+    }
   };
 
   return (
@@ -154,19 +191,20 @@ const MessengerSidebar = ({ openChat }: { openChat: (name: string, message: stri
           />
           {isSearchActive && searchResults.length > 0 && (
             <div className="absolute w-56 bg-gray-800 border border-gray-700 mt-1 rounded shadow-lg">
-              {searchResults.map((result, index) => (
+              {searchResults.map((user, index) => (
                 <div
                   key={index}
-                  onClick={() => handleResultClick(result)}
+                  onClick={() => handleResultClick(user.id)}
                   className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 >
-                  {result}
+                  {user.name}
                 </div>
               ))}
             </div>
           )}
         </div>
 
+        {/* Existing chats */}
         <ul className="mt-4 space-y-2 p-4">
           {chatList.map((chat) => (
             <li

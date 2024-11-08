@@ -38,12 +38,6 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
 
   const handleSendMessage = async () => {
     if (newMessage.trim() !== '') {
-      console.log({
-        chatId: activeChat.id,
-        newMessage: newMessage,
-        userId: userId
-      });
-
       activeChat.messages.push({ sender: userId, content: newMessage });
       setNewMessage('');
 
@@ -72,7 +66,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
         </div>
         <div className="p-4" style={{ maxHeight: '300px', overflowY: 'scroll' }}>
           {/* Display messages */}
-          {activeChat.messages.map((msg, idx) => (
+          {activeChat.messages.length > 0 && activeChat.messages.map((msg, idx) => (
             <div key={idx} className={`my-2 flex flex-col`}>
               {msg.sender !== userId && (
                 <span className="text-gray-500 text-xs mb-1">{activeChat.recipient}</span> // Display name for other users

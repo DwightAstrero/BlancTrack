@@ -189,6 +189,8 @@ const ManagerDashboard = () => {
         <div className="w-full max-w-4xl">
           <h1 className="text-2xl font-bold text-center mb-8">Task Dashboard</h1>
 
+          
+
           {/* Filter Dropdown */}
           <div className="flex items-center space-x-4 mb-4">
             <select id="status-filter" className="w-48 p-2 border border-gray-300 rounded" onChange={handleFilterChange} value={filterStatus || ''}>
@@ -197,8 +199,17 @@ const ManagerDashboard = () => {
               <option value="In Progress">In Progress</option>
               <option value="Completed">Completed</option>
             </select>
-          
-            <div className="flex-grow"></div>
+         
+          {/* Archive Button */}
+          <div className="flex-grow">
+            <Link href="/manager/archive">
+              <button className="px-4 py-2 border-2 border-red-500 bg-brand-brown text-white rounded hover:bg-brand-lgreen shadow-md hover:shadow-lg transition duration-300">
+                Archive ?
+              </button>
+            </Link>
+          </div>
+            
+          <div className="flex-grow"></div>
             <Link href="/manager/create-task">
                 <h2 className="px-4 py-2 bg-brand-brown text-white rounded hover:bg-brand-lgreen">+Add</h2>
             </Link>

@@ -1,8 +1,11 @@
 // Chatbox.tsx
-import React, { useState } from 'react';
+'use client'
+
+import React, { useEffect, useState } from 'react';
+import supabase from '../../lib/supabaseClient';
 
 interface ChatboxProps {
-  activeChat: { name: string; messages: { sender: string; content: string }[] };
+  activeChat: { id: BigInteger; user1: string; user2: string; messages: { sender: string; content: string }[]; recipient: string };
   isChatOpen: boolean;
   closeChatbox: () => void;
   index: number;
@@ -11,11 +14,42 @@ interface ChatboxProps {
 
 const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox, index, totalChatCount }) => {
   const [newMessage, setNewMessage] = useState('');
+  const [userId, setUserId] = useState('');
 
-  const handleSendMessage = () => {
+  useEffect(() => {
+    const fetchAuthorName = async () => {
+      const email = localStorage.getItem('userEmail');
+
+      const { data, error } = await supabase
+        .from('user')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user data:', error);
+        return;
+      }
+
+      setUserId(data?.id);
+    }; 
+    fetchAuthorName();
+  }, []);
+
+  const handleSendMessage = async () => {
     if (newMessage.trim() !== '') {
-      activeChat.messages.push({ sender: 'User', content: newMessage }); // TODO: Replace with actual user details
+      activeChat.messages.push({ sender: userId, content: newMessage });
       setNewMessage('');
+
+      const { error } = await supabase
+      .from('chat')
+      .update({ messages: activeChat.messages })
+      .eq('id', activeChat.id);
+
+      if (error) {
+        console.error('Error updating messages:', error);
+        return;
+      }
     }
   };
 
@@ -28,24 +62,24 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
     >
       <div className="bg-white border border-gray-300 rounded-t-lg shadow-lg overflow-hidden">
         <div className="p-4 bg-gray-800 text-white cursor-pointer" onClick={closeChatbox}>
-          {activeChat.name}
+          {activeChat.recipient}
         </div>
         <div className="p-4" style={{ maxHeight: '300px', overflowY: 'scroll' }}>
           {/* Display messages */}
-          {activeChat.messages.map((msg, idx) => (
+          {activeChat.messages.length > 0 && activeChat.messages.map((msg, idx) => (
             <div key={idx} className={`my-2 flex flex-col`}>
-              {msg.sender !== 'User' && (
-                <span className="text-gray-500 text-xs mb-1">{msg.sender}</span> // Display name for other users
+              {msg.sender !== userId && (
+                <span className="text-gray-500 text-xs mb-1">{activeChat.recipient}</span> // Display name for other users
               )}
               <div
                 className={`p-2 ${
-                  msg.sender === 'User'
+                  msg.sender === userId
                     ? 'bg-blue-200 text-blue-800 ml-auto rounded-tl-lg rounded-tr-lg rounded-bl-lg' // User message (right-aligned, rounded top and left)
                     : 'bg-gray-200 text-gray-800 mr-auto rounded-tl-lg rounded-tr-lg rounded-br-lg' // Other user message (left-aligned, rounded top and right)
                 }`}
                 style={{ maxWidth: '75%', wordBreak: 'break-word' }} // Set maximum width for messages
               >
-                <strong>{msg.sender === 'User' ? '' : ''}</strong> {msg.content} {/* No strong tag for user */}
+                <strong>{msg.sender === userId ? '' : ''}</strong> {msg.content} {/* No strong tag for user */}
               </div>
             </div>
           ))}

@@ -29,6 +29,7 @@ const StaffDashboard = () => {
   const [position, setPosition] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false); 
   const [activeChat, setActiveChat] = useState<{ name: string; message: string } | null>(null);  //CHAT
+  const [ping, setPing] = useState<number>(0);  // Variable to store approaching deadlines count
   const router = useRouter();
 
   useEffect(() => {
@@ -144,45 +145,78 @@ const StaffDashboard = () => {
 
   const filteredTasks = tasks.filter(task => task.staff === staffName && (filterStatus ? task.status === filterStatus : true));
 
+  // Sort tasks by the closest deadline
+  const sortedTasks = filteredTasks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+  // Function to check if a task has an approaching deadline
+  const isApproachingDeadline = (task: Task) => {
+    const dueDate = new Date(task.dueDate);
+    const today = new Date();
+    const timeDiff = dueDate.getTime() - today.getTime();
+    const daysDiff = timeDiff / (1000 * 3600 * 24);  // Convert time difference to days
+    return daysDiff <= 5 && daysDiff >= 0 && task.status !== 'Completed';  // Check that daysDiff is positive
+  };
+  
+
+  // Count approaching deadlines
+  useEffect(() => {
+    const countApproachingDeadlines = () => {
+      console.log('Tasks to count:', tasks);  // Check the tasks before filtering
+      const count = tasks.filter(task => {
+        return task.status !== 'Completed' && isApproachingDeadline(task);
+      }).length;
+      //console.log('Approaching deadlines count:', count);  // Check the count
+      setPing(count);  // Set the count in ping
+    };
+    
+    countApproachingDeadlines();
+  }, [tasks]);  // Ensure this runs when tasks change
+  
+
+
   // Function to toggle chatbox
   const toggleChatbox = () => {
     setIsChatOpen(!isChatOpen);
   };
 
-  
-
   return (
     <div className="min-h-screen bg-brand-cream flex">
 
-        {/* Sidebar */}
-        <LeftSidebar  isOpen={isSidebarOpen}
-                    toggleSidebar={toggleSidebar}
-                    handleLogout={handleLogout}
-                    userId={userId} onClose={function (): void {
-                      throw new Error('Function not implemented.');
-                    } }
-                    position={position}
-                    />
+      {/* Sidebar */}
+      <LeftSidebar  
+        isOpen={isSidebarOpen}
+        toggleSidebar={toggleSidebar}
+        handleLogout={handleLogout}
+        userId={userId}
+        position={position}
+        ping={ping} // Pass the ping variable here
+        onClose={function (): void {
+          throw new Error('Function not implemented.');
+        } }      />
 
-        {/* Main Content */}
-        <div className="flex-grow flex items-center justify-center p-8">
-          <div className="w-full max-w-4xl">
+      {/* Main Content */}
+      <div className="flex-grow flex items-center justify-center p-8">
+        <div className="w-full max-w-4xl">
           <h1 className="text-2xl font-bold text-center mb-8">Task Dashboard</h1>
 
-            {/* Filter Dropdown */}
-            <div className="flex items-center space-x-4 mb-4">
-              <label htmlFor="status-filter" className="text-gray-700">Filter By Status:</label>
-              <select id="status-filter" className="w-48 p-2 border border-gray-300 rounded" onChange={handleFilterChange} value={filterStatus || ''}>
-                <option value="">All</option>
-                <option value="Not Started">Not Started</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-              </select>
-            </div>
+          {/* Filter Dropdown */}
+          <div className="flex items-center space-x-4 mb-4">
+            <label htmlFor="status-filter" className="text-gray-700">Filter By Status:</label>
+            <select id="status-filter" className="w-48 p-2 border border-gray-300 rounded" onChange={handleFilterChange} value={filterStatus || ''}>
+              <option value="">All</option>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
 
-            <div className="grid grid-cols-1 gap-6">
-              {filteredTasks.map(task => (
-                <div key={task.id} className={`p-4 rounded shadow hover:shadow-md transition-shadow duration-200 cursor-pointer ${{'In Progress': 'bg-yellow-200', 'Completed': 'bg-lime-200', 'Not Started': 'bg-orange-200'}[task.status]}`}>
+          <div className="grid grid-cols-1 gap-6">
+            {sortedTasks.map(task => (
+              <div key={task.id} className={`p-4 rounded shadow hover:shadow-md transition-shadow duration-200 cursor-pointer ${{
+                  'In Progress': 'bg-yellow-200',
+                  'Completed': 'bg-lime-200',
+                  'Not Started': 'bg-orange-200'
+                }[task.status]}`}>
                 <div>
                     <h2 className="text-lg font-bold mb-2">{task.title}</h2>
                     <p className="text-sm text-gray-600 mb-2">{task.description}</p>
@@ -192,6 +226,11 @@ const StaffDashboard = () => {
                     <p className="text-sm text-gray-600 mt-5">Created by: {task.manager}</p>
                     <p className="text-sm text-gray-600 mt-3">Assigned to: {task.staff}</p>
                     <p className="text-sm text-gray-600 mt-5">Note: {task.note || 'None'}</p>
+
+                    {/* Display "Approaching Deadlines" warning if applicable */}
+                    {isApproachingDeadline(task) && (
+                      <p className="text-red-500 text-sm font-bold mt-2">Approaching Deadline!</p>   // TODO: Counted and inputted value is sent to ping. Sent to Sidebar.
+                    )}
                 </div>
                 <div className="text-right mt-2">
                   <Link href={`/status/${task.id}`} passHref>
@@ -202,12 +241,12 @@ const StaffDashboard = () => {
                     </button>
                   </Link>
                 </div>
-                </div>
-              ))}
-            </div>
-            </div>
+              </div>
+            ))}
           </div>
-
+        </div>
+      </div>
+      
       {/* Messenger Sidebar */}
       <MessengerSidebar openChat={openChat} />
 

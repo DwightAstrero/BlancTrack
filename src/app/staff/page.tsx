@@ -149,13 +149,20 @@ const StaffDashboard = () => {
   const sortedTasks = filteredTasks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 
   // Function to check if a task has an approaching deadline
-  const isApproachingDeadline = (task: Task) => {
-    const dueDate = new Date(task.dueDate);
-    const today = new Date();
-    const timeDiff = dueDate.getTime() - today.getTime();
-    const daysDiff = timeDiff / (1000 * 3600 * 24);  // Convert time difference to days
-    return daysDiff <= 5 && daysDiff >= 0 && task.status !== 'Completed';  // Check that daysDiff is positive
-  };
+    const isApproachingDeadline = (task: Task) => {
+      const dueDate = new Date(task.dueDate);
+      const today = new Date();
+
+      // Reset time to ensure only date is compared
+      dueDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+
+      const timeDiff = dueDate.getTime() - today.getTime();
+      const daysDiff = timeDiff / (1000 * 3600 * 24); // Convert time difference to days
+
+      // Check that the deadline is today or within the next 5 days and the task isn't completed
+      return daysDiff >= 0 && daysDiff <= 5 && task.status !== 'Completed';
+    };
   
 
   // Count approaching deadlines

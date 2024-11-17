@@ -31,6 +31,7 @@ const ManagerDashboard = () => {
   const [position, setPosition] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false); 
   const [activeChat, setActiveChat] = useState<{ name: string; message: string } | null>(null);  //CHAT
+  const [ping, setPing] = useState<number>(0);  // Variable to store approaching deadlines count
   const router = useRouter();
 
   useEffect(() => {
@@ -172,17 +173,59 @@ const ManagerDashboard = () => {
     setIsChatOpen(true);
   };
 
+  // Sort tasks by the closest deadline
+  const sortedTasks = filteredTasks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+  // Function to check if a task has an approaching deadline
+const isApproachingDeadline = (task: Task) => {
+  const dueDate = new Date(task.dueDate);
+  const today = new Date();
+
+  // Reset time to ensure only date is compared
+  dueDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+
+  const timeDiff = dueDate.getTime() - today.getTime();
+  const daysDiff = timeDiff / (1000 * 3600 * 24); // Convert time difference to days
+
+  // Check that the deadline is today or within the next 5 days and the task isn't completed
+  return daysDiff >= 0 && daysDiff <= 5 && task.status !== 'Completed';
+};
+
+  
+
+  // Count approaching deadlines
+  useEffect(() => {
+    const countApproachingDeadlines = () => {
+      if (!managerName) return; // Ensure managerName is loaded
+  
+      // Filter tasks for the logged-in manager
+      const relevantTasks = tasks.filter(
+        (task) => task.manager === managerName && task.status !== 'Completed'
+      );
+  
+      // Count tasks with approaching deadlines
+      const count = relevantTasks.filter(isApproachingDeadline).length;
+      setPing(count); // Update the ping state
+    };
+  
+    countApproachingDeadlines();
+  }, [tasks, managerName]); // Ensure it re-runs when tasks or managerName changes
+  
+  
+
+
+
   return (
     <div className="min-h-screen w-full bg-brand-cream flex overflow-hidden">
       {/* Sidebar */}
       <LeftSidebar  isOpen={isSidebarOpen}
-                    toggleSidebar={toggleSidebar}
-                    handleLogout={handleLogout}
-                    userId={userId} onClose={function (): void {
-                      throw new Error('Function not implemented.');
-                    } }
-                    position={position}
-                    />
+      toggleSidebar={toggleSidebar}
+      handleLogout={handleLogout}
+      userId={userId} onClose={function (): void {
+        throw new Error('Function not implemented.');
+      } }
+      position={position} ping={ping}                    />
 
       {/* Main Content */}
       <div className="flex-grow flex items-center justify-center p-8">
@@ -228,6 +271,11 @@ const ManagerDashboard = () => {
                   <p className="text-sm text-gray-600 mt-5">Created by: {task.manager}</p>
                   <p className="text-sm text-gray-600 mt-3">Assigned to: {task.staff}</p>
                   <p className="text-sm text-gray-600 mt-5">Note: {task.note || 'None'}</p>
+                    
+                  {/* Display "Approaching Deadlines" warning if applicable */}
+                  {isApproachingDeadline(task) && (
+                      <p className="text-red-500 text-sm font-bold mt-2">Approaching Deadline!</p>   // TODO: Counted and inputted value is sent to ping. Sent to Sidebar.
+                    )}
                 </div>
                 <div className="flex justify-end mt-4 space-x-2">
                   <Link href={`/manager/edit-task/${task.id}`} passHref>

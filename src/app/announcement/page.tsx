@@ -104,13 +104,12 @@ const AnnouncementsPage = () => {
       <div className="relative">
         {/* Sidebar */}
         <LeftSidebar  isOpen={isSidebarOpen}
-                    toggleSidebar={toggleSidebar}
-                    handleLogout={handleLogout}
-                    userId={userId} onClose={function (): void {
-                      throw new Error('Function not implemented.');
-                    } }
-                    position={position}
-                    />
+        toggleSidebar={toggleSidebar}
+        handleLogout={handleLogout}
+        userId={userId} onClose={function (): void {
+          throw new Error('Function not implemented.');
+        } }
+        position={position} ping={0}                    />
 
         {/* Main Content */}
         <div className="container mx-auto py-8">

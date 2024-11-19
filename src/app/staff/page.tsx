@@ -1,3 +1,4 @@
+// page.tsx
 'use client'
 
 import React, { useState, useEffect } from 'react';
@@ -6,6 +7,7 @@ import Link from 'next/link';
 import supabase from '../../lib/supabaseClient';
 import MessengerSidebar from '../component/MessengerSidebar';
 import LeftSidebar from '../component/leftSidebar';
+import DeadlinePopup from '../component/popups'; // Import the DeadlinePopup component
 
 interface Task {
   id: number;
@@ -27,9 +29,11 @@ const StaffDashboard = () => {
   const [staffName, setStaffName] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const [position, setPosition] = useState('');
-  const [isChatOpen, setIsChatOpen] = useState(false); 
-  const [activeChat, setActiveChat] = useState<{ name: string; message: string } | null>(null);  //CHAT
-  const [ping, setPing] = useState<number>(0);  // Variable to store approaching deadlines count
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [activeChat, setActiveChat] = useState<{ name: string; message: string } | null>(null);
+  const [ping, setPing] = useState<number>(0);
+  const [showDeadlinePopup, setShowDeadlinePopup] = useState(false);
+  const [approachingTasks, setApproachingTasks] = useState<Task[]>([]); // State for tasks with approaching deadlines
   const router = useRouter();
 
   useEffect(() => {
@@ -94,7 +98,6 @@ const StaffDashboard = () => {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
-  
 
   const handleFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setFilterStatus(event.target.value);
@@ -145,46 +148,39 @@ const StaffDashboard = () => {
 
   const filteredTasks = tasks.filter(task => task.staff === staffName && (filterStatus ? task.status === filterStatus : true));
 
-  // Sort tasks by the closest deadline
   const sortedTasks = filteredTasks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 
-  // Function to check if a task has an approaching deadline
-    const isApproachingDeadline = (task: Task) => {
-      const dueDate = new Date(task.dueDate);
-      const today = new Date();
+  const isApproachingDeadline = (task: Task) => {
+    const dueDate = new Date(task.dueDate);
+    const today = new Date();
+    dueDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
 
-      // Reset time to ensure only date is compared
-      dueDate.setHours(0, 0, 0, 0);
-      today.setHours(0, 0, 0, 0);
+    const timeDiff = dueDate.getTime() - today.getTime();
+    const daysDiff = timeDiff / (1000 * 3600 * 24);
 
-      const timeDiff = dueDate.getTime() - today.getTime();
-      const daysDiff = timeDiff / (1000 * 3600 * 24); // Convert time difference to days
+    return daysDiff >= 0 && daysDiff <= 5 && task.status !== 'Completed';
+  };
 
-      // Check that the deadline is today or within the next 5 days and the task isn't completed
-      return daysDiff >= 0 && daysDiff <= 5 && task.status !== 'Completed';
-    };
-  
-
-  // Count approaching deadlines
   useEffect(() => {
     const countApproachingDeadlines = () => {
-      console.log('Tasks to count:', tasks);  // Check the tasks before filtering
-      const count = tasks.filter(task => {
+      const tasksWithDeadlines = tasks.filter(task => {
         return task.status !== 'Completed' && isApproachingDeadline(task);
-      }).length;
-      //console.log('Approaching deadlines count:', count);  // Check the count
-      setPing(count);  // Set the count in ping
-      localStorage.setItem('ping', count.toString());
+      });
+
+      setApproachingTasks(tasksWithDeadlines);
+      setPing(tasksWithDeadlines.length);
+      localStorage.setItem('ping', tasksWithDeadlines.length.toString());
+      if (tasksWithDeadlines.length > 0) {
+        setShowDeadlinePopup(true);
+      }
     };
     
     countApproachingDeadlines();
-  }, [tasks]);  // Ensure this runs when tasks change
-  
+  }, [tasks]);
 
-
-  // Function to toggle chatbox
-  const toggleChatbox = () => {
-    setIsChatOpen(!isChatOpen);
+  const closePopup = () => {
+    setShowDeadlinePopup(false);
   };
 
   return (
@@ -197,10 +193,10 @@ const StaffDashboard = () => {
         handleLogout={handleLogout}
         userId={userId}
         position={position}
-        ping={ping} // Pass the ping variable here
+        ping={ping}
         onClose={function (): void {
           throw new Error('Function not implemented.');
-        } }      />
+        } } />
 
       {/* Main Content */}
       <div className="flex-grow flex items-center justify-center p-8">
@@ -235,9 +231,8 @@ const StaffDashboard = () => {
                     <p className="text-sm text-gray-600 mt-3">Assigned to: {task.staff}</p>
                     <p className="text-sm text-gray-600 mt-5">Note: {task.note || 'None'}</p>
 
-                    {/* Display "Approaching Deadlines" warning if applicable */}
                     {isApproachingDeadline(task) && (
-                      <p className="text-red-500 text-sm font-bold mt-2">Approaching Deadline!</p>   // TODO: Counted and inputted value is sent to ping. Sent to Sidebar.
+                      <p className="text-red-500 text-sm font-bold mt-2">Approaching Deadline!</p>
                     )}
                 </div>
                 <div className="text-right mt-2">
@@ -254,7 +249,7 @@ const StaffDashboard = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Messenger Sidebar */}
       <MessengerSidebar openChat={openChat} />
 
@@ -273,6 +268,15 @@ const StaffDashboard = () => {
           <div className="bg-gray-800 h-4 shadow-inner"></div>
         </div>
       )}
+
+      {/* Deadline Popup */}
+      {showDeadlinePopup && (
+        <DeadlinePopup
+          close={closePopup}
+          tasks={tasks.filter(task => isApproachingDeadline(task))} // Pass only the tasks with approaching deadlines
+        />
+      )}
+
     </div>
   );
 };

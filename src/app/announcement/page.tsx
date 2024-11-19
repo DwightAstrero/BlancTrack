@@ -21,6 +21,7 @@ const AnnouncementsPage = () => {
   const [userId, setUserId] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false); 
   const [activeChat, setActiveChat] = useState<{ name: string; message: string } | null>(null);  //CHAT
+  const [ping, setPing] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -99,17 +100,23 @@ const AnnouncementsPage = () => {
     setIsChatOpen(true);
   };
 
+  useEffect(() => { // update notifications circle
+    const tempPing = localStorage.getItem('ping');
+    if(tempPing)
+      setPing(parseInt(tempPing));
+  });
+
   return (
     <div className="min-h-screen bg-brand-cream">
       <div className="relative">
         {/* Sidebar */}
-        <LeftSidebar  isOpen={isSidebarOpen}
+        <LeftSidebar isOpen={isSidebarOpen}
         toggleSidebar={toggleSidebar}
         handleLogout={handleLogout}
         userId={userId} onClose={function (): void {
           throw new Error('Function not implemented.');
         } }
-        position={position} ping={0}                    />
+        position={position} ping={ping}                    /> 
 
         {/* Main Content */}
         <div className="container mx-auto py-8">

@@ -174,6 +174,7 @@ const StaffDashboard = () => {
       }).length;
       //console.log('Approaching deadlines count:', count);  // Check the count
       setPing(count);  // Set the count in ping
+      localStorage.setItem('ping', count.toString());
     };
     
     countApproachingDeadlines();

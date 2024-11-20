@@ -1,3 +1,4 @@
+//staff
 // page.tsx
 'use client'
 
@@ -159,7 +160,7 @@ const StaffDashboard = () => {
     const timeDiff = dueDate.getTime() - today.getTime();
     const daysDiff = timeDiff / (1000 * 3600 * 24);
 
-    return daysDiff >= 0 && daysDiff <= 5 && task.status !== 'Completed';
+    return daysDiff >= 0 && daysDiff <= 5 && task.status !== 'Completed' && task.staff === staffName;
   };
 
   useEffect(() => {
@@ -273,9 +274,10 @@ const StaffDashboard = () => {
       {showDeadlinePopup && (
         <DeadlinePopup
           close={closePopup}
-          tasks={tasks.filter(task => isApproachingDeadline(task))} // Pass only the tasks with approaching deadlines
+          tasks={tasks.filter(task => task.staff === staffName && isApproachingDeadline(task))} // Filter tasks for the logged-in user
         />
       )}
+
 
     </div>
   );

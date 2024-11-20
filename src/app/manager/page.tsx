@@ -1,3 +1,6 @@
+//manager
+//page.tsx
+
 'use client'
 
 import React, { useState, useEffect } from 'react';
@@ -6,6 +9,7 @@ import supabase from '../../lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import MessengerSidebar from '../component/MessengerSidebar';
 import LeftSidebar from '../component/leftSidebar';
+import DeadlinePopup from '../component/popups';
 
 interface Task {
   id: number;
@@ -32,6 +36,8 @@ const ManagerDashboard = () => {
   const [isChatOpen, setIsChatOpen] = useState(false); 
   const [activeChat, setActiveChat] = useState<{ name: string; message: string } | null>(null);  //CHAT
   const [ping, setPing] = useState<number>(0);  // Variable to store approaching deadlines count
+  const [showDeadlinePopup, setShowDeadlinePopup] = useState(false);
+  const [approachingTasks, setApproachingTasks] = useState<Task[]>([]); // State for tasks with approaching deadlines
   const router = useRouter();
 
   useEffect(() => {
@@ -73,20 +79,22 @@ const ManagerDashboard = () => {
   }, [position]);
 
   useEffect(() => {
-    async function fetchTasks() {
-      try {
-        const { data: tasks, error } = await supabase.from('task').select('*');
-        if (error) {
-          throw error;
-        }
-        setTasks(tasks || []);
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
+  async function fetchTasks() {
+    try {
+      const { data: tasks, error } = await supabase.from('task').select('*');
+      if (error) {
+        throw error;
       }
+      setTasks(tasks || []);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
     }
+  }
 
-    fetchTasks();
-  }, []);
+  fetchTasks();
+}, []);
+
+
 
   const handleDelete = async (taskId: number) => {
     try {
@@ -166,66 +174,64 @@ const ManagerDashboard = () => {
     fetchManagerName();
   }, []);
 
-  const filteredTasks = tasks.filter(task => task.manager === managerName && (filterStatus ? task.status === filterStatus : true));
 
   const openChat = (name: string, message: string) => {
     setActiveChat({ name, message });
     setIsChatOpen(true);
   };
 
-  // Sort tasks by the closest deadline
+  const filteredTasks = tasks.filter(task => task.manager === managerName && (filterStatus ? task.status === filterStatus : true));
+
   const sortedTasks = filteredTasks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 
-  // Function to check if a task has an approaching deadline
-const isApproachingDeadline = (task: Task) => {
-  const dueDate = new Date(task.dueDate);
-  const today = new Date();
+  const isApproachingDeadline = (task: Task) => {
+    const dueDate = new Date(task.dueDate);
+    const today = new Date();
+    dueDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
 
-  // Reset time to ensure only date is compared
-  dueDate.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
+    const timeDiff = dueDate.getTime() - today.getTime();
+    const daysDiff = timeDiff / (1000 * 3600 * 24);
 
-  const timeDiff = dueDate.getTime() - today.getTime();
-  const daysDiff = timeDiff / (1000 * 3600 * 24); // Convert time difference to days
+    return daysDiff >= 0 && daysDiff <= 5 && task.status !== 'Completed' && task.manager === managerName;
+  };
 
-  // Check that the deadline is today or within the next 5 days and the task isn't completed
-  return daysDiff >= 0 && daysDiff <= 5 && task.status !== 'Completed';
-};
-
-  
-
-  // Count approaching deadlines
   useEffect(() => {
     const countApproachingDeadlines = () => {
-      if (!managerName) return; // Ensure managerName is loaded
-  
-      // Filter tasks for the logged-in manager
-      const relevantTasks = tasks.filter(
-        (task) => task.manager === managerName && task.status !== 'Completed'
-      );
-  
-      // Count tasks with approaching deadlines
-      const count = relevantTasks.filter(isApproachingDeadline).length;
-      setPing(count); // Update the ping state
-    };
-  
-    countApproachingDeadlines();
-  }, [tasks, managerName]); // Ensure it re-runs when tasks or managerName changes
-  
-  
+      const tasksWithDeadlines = tasks.filter(task => {
+        return task.status !== 'Completed' && isApproachingDeadline(task);
+      });
 
+      setApproachingTasks(tasksWithDeadlines);
+      setPing(tasksWithDeadlines.length);
+      localStorage.setItem('ping', tasksWithDeadlines.length.toString());
+      if (tasksWithDeadlines.length > 0) {
+        setShowDeadlinePopup(true);
+      }
+    };
+    
+    countApproachingDeadlines();
+  }, [tasks]);
+
+  const closePopup = () => {
+    setShowDeadlinePopup(false);
+  };
 
 
   return (
     <div className="min-h-screen w-full bg-brand-cream flex overflow-hidden">
+
       {/* Sidebar */}
-      <LeftSidebar  isOpen={isSidebarOpen}
-      toggleSidebar={toggleSidebar}
-      handleLogout={handleLogout}
-      userId={userId} onClose={function (): void {
-        throw new Error('Function not implemented.');
-      } }
-      position={position} ping={ping}                    />
+      <LeftSidebar  
+        isOpen={isSidebarOpen}
+        toggleSidebar={toggleSidebar}
+        handleLogout={handleLogout}
+        userId={userId}
+        position={position}
+        ping={ping}
+        onClose={function (): void {
+          throw new Error('Function not implemented.');
+        } } />
 
       {/* Main Content */}
       <div className="flex-grow flex items-center justify-center p-8">
@@ -260,7 +266,7 @@ const isApproachingDeadline = (task: Task) => {
 
           {/* Task Cards */}
           <div className="grid grid-cols-1 gap-6">
-            {filteredTasks.map(task => (
+            {sortedTasks.map(task => (
               <div key={task.id} className={`p-4 rounded shadow hover:shadow-md transition-shadow duration-200 cursor-pointer ${{'In Progress': 'bg-yellow-200', 'Completed': 'bg-lime-200', 'Not Started': 'bg-orange-200'}[task.status]}`}>
                 <div>
                   <h2 className="text-lg font-bold mb-2">{task.title}</h2>
@@ -274,7 +280,7 @@ const isApproachingDeadline = (task: Task) => {
                     
                   {/* Display "Approaching Deadlines" warning if applicable */}
                   {isApproachingDeadline(task) && (
-                      <p className="text-red-500 text-sm font-bold mt-2">Approaching Deadline!</p>   // TODO: Counted and inputted value is sent to ping. Sent to Sidebar.
+                      <p className="text-red-500 text-sm font-bold mt-2">Approaching Deadline!</p>
                     )}
                 </div>
                 <div className="flex justify-end mt-4 space-x-2">
@@ -329,6 +335,15 @@ const isApproachingDeadline = (task: Task) => {
         <div className="bg-gray-800 h-4 shadow-inner"></div>
       </div>
     )}
+
+        {/* Deadline Popup */}
+        {showDeadlinePopup && (
+        <DeadlinePopup
+          close={closePopup}
+          tasks={tasks.filter(task => task.manager === managerName && isApproachingDeadline(task))} // Filter tasks for the logged-in user
+        />
+      )}
+
     </div>
   );
 };

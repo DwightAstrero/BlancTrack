@@ -34,6 +34,7 @@ const StaffDashboard = () => {
   const [activeChat, setActiveChat] = useState<{ name: string; message: string } | null>(null);
   const [ping, setPing] = useState<number>(0);
   const [showDeadlinePopup, setShowDeadlinePopup] = useState(false);
+  const [showOverduePopup, setShowOverduePopup] = useState(false);
   const [approachingTasks, setApproachingTasks] = useState<Task[]>([]); // State for tasks with approaching deadlines
   const router = useRouter();
 
@@ -151,7 +152,7 @@ const StaffDashboard = () => {
 
   const sortedTasks = filteredTasks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 
-  const isApproachingDeadline = (task: Task) => {
+  const isDeadlineStatus = (task: Task) => {
     const dueDate = new Date(task.dueDate);
     const today = new Date();
     dueDate.setHours(0, 0, 0, 0);
@@ -160,21 +161,34 @@ const StaffDashboard = () => {
     const timeDiff = dueDate.getTime() - today.getTime();
     const daysDiff = timeDiff / (1000 * 3600 * 24);
 
-    return daysDiff >= 0 && daysDiff <= 5 && task.status !== 'Completed' && task.staff === staffName;
+    const isApproachingDeadline =
+      daysDiff >= 0 && daysDiff <= 5 && task.status !== 'Completed' && task.staff === staffName;
+
+    const isOverdue =
+      daysDiff < 0 && task.status !== 'Completed' && task.staff === staffName;
+
+    return { isApproachingDeadline, isOverdue };
   };
 
   useEffect(() => {
     const countApproachingDeadlines = () => {
       const tasksWithDeadlines = tasks.filter(task => {
-        return task.status !== 'Completed' && isApproachingDeadline(task);
+        return task.status !== 'Completed' && isDeadlineStatus(task).isApproachingDeadline;
+      });
+
+      const tasksOverdue = tasks.filter(task => {
+        return task.status !== 'Completed' && isDeadlineStatus(task).isOverdue;
       });
 
       setApproachingTasks(tasksWithDeadlines);
-      setPing(tasksWithDeadlines.length);
-      localStorage.setItem('ping', tasksWithDeadlines.length.toString());
-      if (tasksWithDeadlines.length > 0) {
+      const ping = tasksWithDeadlines.length+tasksOverdue.length;
+      setPing(ping);
+      localStorage.setItem('ping', ping.toString());
+
+      if (tasksWithDeadlines.length > 0)
         setShowDeadlinePopup(true);
-      }
+      if (tasksOverdue.length > 0)
+        setShowOverduePopup(true);
     };
     
     countApproachingDeadlines();
@@ -182,6 +196,10 @@ const StaffDashboard = () => {
 
   const closePopup = () => {
     setShowDeadlinePopup(false);
+  };
+
+  const closeOverdue = () => {
+    setShowOverduePopup(false);
   };
 
   return (
@@ -232,8 +250,11 @@ const StaffDashboard = () => {
                     <p className="text-sm text-gray-600 mt-3">Assigned to: {task.staff}</p>
                     <p className="text-sm text-gray-600 mt-5">Note: {task.note || 'None'}</p>
 
-                    {isApproachingDeadline(task) && (
+                    {isDeadlineStatus(task).isApproachingDeadline && (
                       <p className="text-red-500 text-sm font-bold mt-2">Approaching Deadline!</p>
+                    )}
+                    {isDeadlineStatus(task).isOverdue && (
+                      <p className="text-red-500 text-sm font-bold mt-2">Overdue!</p>
                     )}
                 </div>
                 <div className="text-right mt-2">
@@ -270,14 +291,24 @@ const StaffDashboard = () => {
         </div>
       )}
 
-      {/* Deadline Popup */}
-      {showDeadlinePopup && (
+      <div className="fixed flex flex-col right-0">
+        {/* Deadline Popup */}
+        {showDeadlinePopup && (
         <DeadlinePopup
           close={closePopup}
-          tasks={tasks.filter(task => task.staff === staffName && isApproachingDeadline(task))} // Filter tasks for the logged-in user
+          tasks={tasks.filter(task => task.staff === staffName && isDeadlineStatus(task).isApproachingDeadline)} // Filter tasks for the logged-in user
+          title="Approaching Deadlines!"
         />
-      )}
-
+        )}
+        {/* Overdue Popup */}
+        {showOverduePopup && (
+          <DeadlinePopup
+            close={closeOverdue}
+            tasks={tasks.filter(task => task.staff === staffName && isDeadlineStatus(task).isOverdue)} // Filter tasks for the logged-in user
+            title="Overdue!"
+          />
+        )}
+      </div>
 
     </div>
   );

@@ -8,13 +8,14 @@ interface Task {
 interface DeadlinePopupProps {
   tasks: Task[];
   close: () => void; // Prop to close the popup
+  title: String;
 }
 
-const DeadlinePopup: React.FC<DeadlinePopupProps> = ({ tasks, close }) => {
+const DeadlinePopup: React.FC<DeadlinePopupProps> = ({ tasks, close, title }) => {
   return (
-    <div className="fixed top-0 right-0 m-4 p-4 bg-red-500 text-white rounded-lg shadow-lg z-50 w-72">
+    <div className="top-0 right-0 m-4 p-4 bg-red-500 text-white rounded-lg shadow-lg z-50 w-72">
       <div className="flex justify-between items-center mb-2">
-        <h3 className="font-bold text-lg">Approaching Deadlines!</h3>
+        <h3 className="font-bold text-lg">{title}</h3>
         <button onClick={close} className="text-white font-bold text-xl">&times;</button>
       </div>
       <div>

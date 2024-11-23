@@ -1,3 +1,5 @@
+//staff
+// page.tsx
 'use client'
 
 import React, { useState, useEffect } from 'react';
@@ -6,6 +8,7 @@ import Link from 'next/link';
 import supabase from '../../lib/supabaseClient';
 import MessengerSidebar from '../component/MessengerSidebar';
 import LeftSidebar from '../component/leftSidebar';
+import DeadlinePopup from '../component/popups'; // Import the DeadlinePopup component
 
 interface Task {
   id: number;
@@ -27,8 +30,12 @@ const StaffDashboard = () => {
   const [staffName, setStaffName] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const [position, setPosition] = useState('');
-  const [isChatOpen, setIsChatOpen] = useState(false); 
-  const [activeChat, setActiveChat] = useState<{ name: string; message: string } | null>(null);  //CHAT
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [activeChat, setActiveChat] = useState<{ name: string; message: string } | null>(null);
+  const [ping, setPing] = useState<number>(0);
+  const [showDeadlinePopup, setShowDeadlinePopup] = useState(false);
+  const [showOverduePopup, setShowOverduePopup] = useState(false);
+  const [approachingTasks, setApproachingTasks] = useState<Task[]>([]); // State for tasks with approaching deadlines
   const router = useRouter();
 
   useEffect(() => {
@@ -93,7 +100,6 @@ const StaffDashboard = () => {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
-  
 
   const handleFilterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setFilterStatus(event.target.value);
@@ -144,45 +150,96 @@ const StaffDashboard = () => {
 
   const filteredTasks = tasks.filter(task => task.staff === staffName && (filterStatus ? task.status === filterStatus : true));
 
-  // Function to toggle chatbox
-  const toggleChatbox = () => {
-    setIsChatOpen(!isChatOpen);
+  const sortedTasks = filteredTasks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+  const isDeadlineStatus = (task: Task) => {
+    const dueDate = new Date(task.dueDate);
+    const today = new Date();
+    dueDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    const timeDiff = dueDate.getTime() - today.getTime();
+    const daysDiff = timeDiff / (1000 * 3600 * 24);
+
+    const isApproachingDeadline =
+      daysDiff >= 0 && daysDiff <= 5 && task.status !== 'Completed' && task.staff === staffName;
+
+    const isOverdue =
+      daysDiff < 0 && task.status !== 'Completed' && task.staff === staffName;
+
+    return { isApproachingDeadline, isOverdue };
   };
 
-  
+  useEffect(() => {
+    const countApproachingDeadlines = () => {
+      const tasksWithDeadlines = tasks.filter(task => {
+        return task.status !== 'Completed' && isDeadlineStatus(task).isApproachingDeadline;
+      });
+
+      const tasksOverdue = tasks.filter(task => {
+        return task.status !== 'Completed' && isDeadlineStatus(task).isOverdue;
+      });
+
+      setApproachingTasks(tasksWithDeadlines);
+      const ping = tasksWithDeadlines.length+tasksOverdue.length;
+      setPing(ping);
+      localStorage.setItem('ping', ping.toString());
+
+      if (tasksWithDeadlines.length > 0)
+        setShowDeadlinePopup(true);
+      if (tasksOverdue.length > 0)
+        setShowOverduePopup(true);
+    };
+    
+    countApproachingDeadlines();
+  }, [tasks]);
+
+  const closePopup = () => {
+    setShowDeadlinePopup(false);
+  };
+
+  const closeOverdue = () => {
+    setShowOverduePopup(false);
+  };
 
   return (
     <div className="min-h-screen bg-brand-cream flex">
 
-        {/* Sidebar */}
-        <LeftSidebar  isOpen={isSidebarOpen}
-                    toggleSidebar={toggleSidebar}
-                    handleLogout={handleLogout}
-                    userId={userId} onClose={function (): void {
-                      throw new Error('Function not implemented.');
-                    } }
-                    position={position}
-                    />
+      {/* Sidebar */}
+      <LeftSidebar  
+        isOpen={isSidebarOpen}
+        toggleSidebar={toggleSidebar}
+        handleLogout={handleLogout}
+        userId={userId}
+        position={position}
+        ping={ping}
+        onClose={function (): void {
+          throw new Error('Function not implemented.');
+        } } />
 
-        {/* Main Content */}
-        <div className="flex-grow flex items-center justify-center p-8">
-          <div className="w-full max-w-4xl">
+      {/* Main Content */}
+      <div className="flex-grow flex items-center justify-center p-8">
+        <div className="w-full max-w-4xl">
           <h1 className="text-2xl font-bold text-center mb-8">Task Dashboard</h1>
 
-            {/* Filter Dropdown */}
-            <div className="flex items-center space-x-4 mb-4">
-              <label htmlFor="status-filter" className="text-gray-700">Filter By Status:</label>
-              <select id="status-filter" className="w-48 p-2 border border-gray-300 rounded" onChange={handleFilterChange} value={filterStatus || ''}>
-                <option value="">All</option>
-                <option value="Not Started">Not Started</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-              </select>
-            </div>
+          {/* Filter Dropdown */}
+          <div className="flex items-center space-x-4 mb-4">
+            <label htmlFor="status-filter" className="text-gray-700">Filter By Status:</label>
+            <select id="status-filter" className="w-48 p-2 border border-gray-300 rounded" onChange={handleFilterChange} value={filterStatus || ''}>
+              <option value="">All</option>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
 
-            <div className="grid grid-cols-1 gap-6">
-              {filteredTasks.map(task => (
-                <div key={task.id} className={`p-4 rounded shadow hover:shadow-md transition-shadow duration-200 cursor-pointer ${{'In Progress': 'bg-yellow-200', 'Completed': 'bg-lime-200', 'Not Started': 'bg-orange-200'}[task.status]}`}>
+          <div className="grid grid-cols-1 gap-6">
+            {sortedTasks.map(task => (
+              <div key={task.id} className={`p-4 rounded shadow hover:shadow-md transition-shadow duration-200 cursor-pointer ${{
+                  'In Progress': 'bg-yellow-200',
+                  'Completed': 'bg-lime-200',
+                  'Not Started': 'bg-orange-200'
+                }[task.status]}`}>
                 <div>
                     <h2 className="text-lg font-bold mb-2">{task.title}</h2>
                     <p className="text-sm text-gray-600 mb-2">{task.description}</p>
@@ -192,6 +249,13 @@ const StaffDashboard = () => {
                     <p className="text-sm text-gray-600 mt-5">Created by: {task.manager}</p>
                     <p className="text-sm text-gray-600 mt-3">Assigned to: {task.staff}</p>
                     <p className="text-sm text-gray-600 mt-5">Note: {task.note || 'None'}</p>
+
+                    {isDeadlineStatus(task).isApproachingDeadline && (
+                      <p className="text-red-500 text-sm font-bold mt-2">Approaching Deadline!</p>
+                    )}
+                    {isDeadlineStatus(task).isOverdue && (
+                      <p className="text-red-500 text-sm font-bold mt-2">Overdue!</p>
+                    )}
                 </div>
                 <div className="text-right mt-2">
                   <Link href={`/status/${task.id}`} passHref>
@@ -202,11 +266,11 @@ const StaffDashboard = () => {
                     </button>
                   </Link>
                 </div>
-                </div>
-              ))}
-            </div>
-            </div>
+              </div>
+            ))}
           </div>
+        </div>
+      </div>
 
       {/* Messenger Sidebar */}
       <MessengerSidebar openChat={openChat} />
@@ -226,6 +290,26 @@ const StaffDashboard = () => {
           <div className="bg-gray-800 h-4 shadow-inner"></div>
         </div>
       )}
+
+      <div className="fixed flex flex-col right-0">
+        {/* Deadline Popup */}
+        {showDeadlinePopup && (
+        <DeadlinePopup
+          close={closePopup}
+          tasks={tasks.filter(task => task.staff === staffName && isDeadlineStatus(task).isApproachingDeadline)} // Filter tasks for the logged-in user
+          title="Approaching Deadlines!"
+        />
+        )}
+        {/* Overdue Popup */}
+        {showOverduePopup && (
+          <DeadlinePopup
+            close={closeOverdue}
+            tasks={tasks.filter(task => task.staff === staffName && isDeadlineStatus(task).isOverdue)} // Filter tasks for the logged-in user
+            title="Overdue!"
+          />
+        )}
+      </div>
+
     </div>
   );
 };

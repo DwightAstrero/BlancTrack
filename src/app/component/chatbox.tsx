@@ -1,4 +1,3 @@
-// Chatbox.tsx
 'use client'
 
 import React, { useEffect, useState } from 'react';
@@ -32,7 +31,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
       }
 
       setUserId(data?.id);
-    }; 
+    };
     fetchAuthorName();
   }, []);
 
@@ -42,9 +41,9 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
       setNewMessage('');
 
       const { error } = await supabase
-      .from('chat')
-      .update({ messages: activeChat.messages })
-      .eq('id', activeChat.id);
+        .from('chat')
+        .update({ messages: activeChat.messages })
+        .eq('id', activeChat.id);
 
       if (error) {
         console.error('Error updating messages:', error);
@@ -55,34 +54,40 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
 
   return (
     <div
-      className={`fixed bottom-0 right-0 w-96 transition-transform duration-300 transform ${
-        isChatOpen ? `translate-x-${index * 100}` : 'translate-y-full'
+      className={`w-96 transition-transform duration-300 transform ${
+        isChatOpen ? 'translate-x-0' : 'translate-y-full'
       }`}
-      style={{ zIndex: totalChatCount - index }}
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        right: `${index * 390}px`, // Adjust this spacing as needed for your layout
+        zIndex: totalChatCount - index,
+        flexShrink: 0,
+      }}
     >
       <div className="bg-white border border-gray-300 rounded-t-lg shadow-lg overflow-hidden">
         <div className="p-4 bg-gray-800 text-white cursor-pointer" onClick={closeChatbox}>
           {activeChat.recipient}
         </div>
         <div className="p-4" style={{ maxHeight: '300px', overflowY: 'scroll' }}>
-          {/* Display messages */}
-          {activeChat.messages.length > 0 && activeChat.messages.map((msg, idx) => (
-            <div key={idx} className={`my-2 flex flex-col`}>
-              {msg.sender !== userId && (
-                <span className="text-gray-500 text-xs mb-1">{activeChat.recipient}</span> // Display name for other users
-              )}
-              <div
-                className={`p-2 ${
-                  msg.sender === userId
-                    ? 'bg-blue-200 text-blue-800 ml-auto rounded-tl-lg rounded-tr-lg rounded-bl-lg' // User message (right-aligned, rounded top and left)
-                    : 'bg-gray-200 text-gray-800 mr-auto rounded-tl-lg rounded-tr-lg rounded-br-lg' // Other user message (left-aligned, rounded top and right)
-                }`}
-                style={{ maxWidth: '75%', wordBreak: 'break-word' }} // Set maximum width for messages
-              >
-                <strong>{msg.sender === userId ? '' : ''}</strong> {msg.content} {/* No strong tag for user */}
+          {activeChat.messages.length > 0 &&
+            activeChat.messages.map((msg, idx) => (
+              <div key={idx} className="my-2 flex flex-col">
+                {msg.sender !== userId && (
+                  <span className="text-gray-500 text-xs mb-1">{activeChat.recipient}</span>
+                )}
+                <div
+                  className={`p-2 ${
+                    msg.sender === userId
+                      ? 'bg-blue-200 text-blue-800 ml-auto rounded-tl-lg rounded-tr-lg rounded-bl-lg'
+                      : 'bg-gray-200 text-gray-800 mr-auto rounded-tl-lg rounded-tr-lg rounded-br-lg'
+                  }`}
+                  style={{ maxWidth: '75%', wordBreak: 'break-word' }}
+                >
+                  {msg.content}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
         <div className="flex p-2 border-t border-gray-300">
           <input
@@ -92,10 +97,7 @@ const Chatbox: React.FC<ChatboxProps> = ({ activeChat, isChatOpen, closeChatbox,
             className="flex-1 p-2 border border-gray-400 rounded"
             placeholder="Type your message..."
           />
-          <button
-            onClick={handleSendMessage}
-            className="ml-2 p-2 bg-blue-500 text-white rounded"
-          >
+          <button onClick={handleSendMessage} className="ml-2 p-2 bg-blue-500 text-white rounded">
             Send
           </button>
         </div>

@@ -189,6 +189,7 @@ const AdminDashboard = () => {
                       throw new Error('Function not implemented.');
                     } }
                     position={position}
+                    ping={0}
                     />
 
         {/* Main Content */}

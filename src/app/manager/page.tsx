@@ -1,3 +1,4 @@
+'use client';
 //manager
 //page.tsx
 
@@ -22,6 +23,7 @@ interface Task {
   manager: string;
   createdAt: string;
   note: string;
+  dependencies: string[];
 }
 
 const ManagerDashboard = () => {
@@ -44,7 +46,6 @@ const ManagerDashboard = () => {
   useEffect(() => {
     const isValidRedirect = async () => {
       const email = localStorage.getItem('userEmail');
-      
       if (!email) {
         router.push('/login');
       }
@@ -173,6 +174,7 @@ const ManagerDashboard = () => {
     fetchManagerName();
   }, []);
 
+  // const filteredTasks = tasks.filter(task => task.manager === managerName && (filterStatus ? task.status === filterStatus : true));
 
   const openChat = (name: string, message: string) => {
     setActiveChat({ name, message });
@@ -234,6 +236,19 @@ const ManagerDashboard = () => {
   };
 
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Not Started':
+        return 'bg-orange-200';
+      case 'In Progress':
+        return 'bg-yellow-200';
+      case 'Completed':
+        return 'bg-lime-200';
+      default:
+        return 'bg-gray-200';
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-brand-cream flex overflow-hidden">
 
@@ -283,16 +298,17 @@ const ManagerDashboard = () => {
           {/* Task Cards */}
           <div className="grid grid-cols-1 gap-6">
             {sortedTasks.map(task => (
-              <div key={task.id} className={`p-4 rounded shadow hover:shadow-md transition-shadow duration-200 cursor-pointer ${{'In Progress': 'bg-yellow-200', 'Completed': 'bg-lime-200', 'Not Started': 'bg-orange-200'}[task.status]}`}>
-                <div>
-                  <h2 className="text-lg font-bold mb-2">{task.title}</h2>
-                  <p className="text-sm text-gray-600 mb-2">Description: {task.description}</p>
-                  <p className="text-sm text-gray-600 mt-5">Status: {task.status}</p>
-                  <p className="text-sm text-gray-600 mt-2">Due Date: {task.dueDate}</p>
-                  <p className="text-sm text-gray-600 mt-2">Priority: {task.priorityLevel}</p>
-                  <p className="text-sm text-gray-600 mt-5">Created by: {task.manager}</p>
-                  <p className="text-sm text-gray-600 mt-3">Assigned to: {task.staff}</p>
-                  <p className="text-sm text-gray-600 mt-5">Note: {task.note || 'None'}</p>
+              <div key={task.id} className="relative">
+                <div className={`p-4 rounded shadow hover:shadow-md transition-shadow duration-200 cursor-pointer ${getStatusColor(task.status)}`}>
+                  <div>
+                    <h2 className="text-lg font-bold mb-2">{task.title}</h2>
+                    <p className="text-sm text-gray-600 mb-2">Description: {task.description}</p>
+                    <p className="text-sm text-gray-600 mt-5">Status: {task.status}</p>
+                    <p className="text-sm text-gray-600 mt-2">Due Date: {task.dueDate}</p>
+                    <p className="text-sm text-gray-600 mt-2">Priority: {task.priorityLevel}</p>
+                    <p className="text-sm text-gray-600 mt-5">Created by: {task.manager}</p>
+                    <p className="text-sm text-gray-600 mt-3">Assigned to: {task.staff}</p>
+                    <p className="text-sm text-gray-600 mt-5">Note: {task.note || 'None'}</p>
                     
                   {/* Display "Approaching Deadlines" warning if applicable */}
                   {isDeadlineStatus(task).isApproachingDeadline && (
@@ -301,22 +317,44 @@ const ManagerDashboard = () => {
                   {isDeadlineStatus(task).isOverdue && (
                       <p className="text-red-500 text-sm font-bold mt-2">Overdue!</p>
                     )}
-                </div>
-                <div className="flex justify-end mt-4 space-x-2">
-                  <Link href={`/manager/edit-task/${task.id}`} passHref>
-                    <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-400">
+                  </div>
+                  <div className="flex justify-end mt-4 space-x-2">
+                    <Link href={`/manager/edit-task/${task.id}`} passHref>
+                      <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z"/>
+                        </svg>
+                      </button>
+                    </Link>
+                    <button onClick={() => openModal(task.id)} className="px-4 py-2 bg-rose-500 text-white rounded hover:bg-red-400">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z"/>
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
                       </svg>
                     </button>
-                  </Link>
-                  <button onClick={() => openModal(task.id)} className="px-4 py-2 bg-rose-500 text-white rounded hover:bg-red-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                      <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                      <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                    </svg>
-                  </button>
+                  </div>
                 </div>
+
+                {/* Subcards for dependencies */}
+                {task.dependencies && task.dependencies.length > 0 && (
+                  <div className="relative mt-4 ml-8">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-gray-400"></div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-semibold">Dependencies:</h3>
+                      {task.dependencies.map(depId => {
+                        const depTask = tasks.find(t => t.id.toString() === depId);
+                        return depTask ? (
+                          <div key={depTask.id} className={`p-2 rounded shadow-inner mt-2 ${getStatusColor(depTask.status)}`}>
+                            <h4 className="text-md font-bold">{depTask.title}</h4>
+                            <p>Due: {new Date(depTask.dueDate).toLocaleDateString()}</p>
+                            <p>Priority: {depTask.priorityLevel}</p>
+                            <p className={`inline-block px-2 py-1 text-black rounded ${getStatusColor(depTask.status)}`}>{depTask.status}</p>
+                          </div>
+                        ) : null;
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

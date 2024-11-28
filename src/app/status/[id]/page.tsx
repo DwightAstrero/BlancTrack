@@ -18,7 +18,8 @@ const UpdateStatus = () => {
   const [note, setNote] = useState('');
   const [position, setPosition] = useState('');
   const [task, setTask] = useState<any>(null);
-  const [dependencies, setDependencies] = useState<any[]>([]);
+  const [dependencies, setDependencies] = useState<string[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
 
   useEffect(() => {
     const isValidRedirect = async () => {
@@ -76,6 +77,19 @@ const UpdateStatus = () => {
     fetchTask();
   }, [taskId]);
 
+  useEffect(() => {
+    const fetchAllTasks = async () => {
+      const { data, error } = await supabase.from('task').select('*');
+      if (error) {
+        console.error('Error fetching all tasks:', error);
+        return;
+      }
+      setTasks(data);
+    };
+
+    fetchAllTasks();
+  }, []);
+
   const handleStatusChange = (selectedOption: { label: string; value: string }) => {
     setStatus(selectedOption);
   };
@@ -86,7 +100,7 @@ const UpdateStatus = () => {
     // Check if all dependencies are complete if trying to set status to "Completed"
     if (status.value === 'Completed') {
       const incompleteDependencies = dependencies.filter((depId: string) => {
-        const depTask = dependencies.find((t: any) => t.id.toString() === depId);
+        const depTask = tasks.find((t: any) => t.id.toString() === depId);
         return depTask && depTask.status !== 'Completed';
       });
 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useRouter, useSearchParams, useParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Select from 'react-select';
 import supabase from '../../../../lib/supabaseClient';
@@ -22,6 +22,8 @@ const EditTask = () => {
   const [note, setNote] = useState('');
   const [position, setPosition] = useState('');
   const [createdAt, setCreatedAt] = useState(new Date());
+  const [dependencies, setDependencies] = useState<string[]>([]);
+  const [allTasks, setAllTasks] = useState<any[]>([]);
 
   useEffect(() => {
     const isValidRedirect = async () => {
@@ -96,16 +98,50 @@ const EditTask = () => {
         setStaff({ label: task.staff, value: task.staff });
         setCreatedAt(new Date(task.createdAt));
         setNote(task.note || '');
+        setDependencies(task.dependencies || []);
       } catch (error) {
         console.error('Error fetching task:', error);
       }
     }
 
+    const fetchAllTasks = async () => {
+      const { data, error } = await supabase.from('task').select('id, title, status, staff');
+      if (error) {
+        console.error('Error fetching all tasks:', error);
+        return;
+      }
+      setAllTasks(data);
+    };
+
     if (taskId) {
       fetchStaff();
       fetchTask();
+      fetchAllTasks();
     }
   }, [taskId]);
+
+  const handleDependencyChange = (taskId: string) => {
+    setDependencies(prev => {
+      if (prev.includes(taskId)) {
+        return prev.filter(id => id !== taskId);
+      } else {
+        return [...prev, taskId];
+      }
+    });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Not Started':
+        return '#FBD38D';
+      case 'In Progress':
+        return '#FEFCBF';
+      case 'Completed':
+        return '#D9F99D';
+      default:
+        return 'gray';
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -124,6 +160,7 @@ const EditTask = () => {
       staff: staff.value,
       createdAt: createdAt.toISOString(),
       note,
+      dependencies,
     };
 
     try {
@@ -226,7 +263,7 @@ const EditTask = () => {
             />
           </div>
           <div>
-          <label htmlFor="note" className="block text-sm font-medium text-gray-700">Note</label>
+            <label htmlFor="note" className="block text-sm font-medium text-gray-700">Note</label>
             <textarea
               id="note"
               name="note"
@@ -234,6 +271,35 @@ const EditTask = () => {
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
+          </div>
+          <div>
+            <label htmlFor="dependencies" className="block text-sm font-medium text-gray-700">Dependencies</label>
+            <div>
+              {allTasks
+                .filter(task => task.staff === staff.value && task.id.toString() !== taskId)
+                .map(task => (
+                  <div
+                    key={task.id}
+                    style={{
+                      backgroundColor: getStatusColor(task.status),
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      padding: '8px',
+                      marginBottom: '8px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={dependencies.includes(task.id.toString())}
+                      onChange={() => handleDependencyChange(task.id.toString())}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span>{task.title}</span>
+                  </div>
+                ))}
+            </div>
           </div>
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-900">

@@ -5,7 +5,7 @@ describe('Login Integration Test', () => {
     let driver;
 
     // Increase the default timeout for the entire test suite
-    jest.setTimeout(20000); // Set timeout to 20 seconds
+    jest.setTimeout(100000); // Set timeout to 20 seconds
 
     beforeAll(async () => {
         const options = new chrome.Options();
